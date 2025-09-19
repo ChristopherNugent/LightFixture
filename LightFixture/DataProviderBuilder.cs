@@ -12,22 +12,12 @@ public sealed class DataProviderBuilder
         Customize(StringProvider.Instance);
     }
     
-    public DataProviderBuilder Register<T>(Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
+    internal DataProviderBuilder RegisterInternal<T>(Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
     {
         var type = typeof(T);
         _factories[type] = factory;
-        if (type.IsValueType)
-        {
-            _factories[typeof(Nullable<>).MakeGenericType(type)] = factory;
-        }
         return this;
     }
-    
-    public DataProviderBuilder Register<T>(Func<DataProvider, ResolvedData<T>> factory)
-        => Register((p, _) => factory(p));
-    
-    public DataProviderBuilder Register<T>(Func<ResolvedData<T>> factory)
-        => Register((_, _) => factory());
 
     public DataProviderBuilder Customize(IDataProviderCustomization customization)
     {
@@ -36,4 +26,56 @@ public sealed class DataProviderBuilder
     }
 
     public DataProvider Build() => new(_factories);
+}
+
+public static class DataProviderBuilderClassExtensions
+{
+    public static DataProviderBuilder Register<T>(
+        this DataProviderBuilder builder,
+        Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
+        where T : class
+        => builder.RegisterInternal<T>(factory);
+    
+    public static DataProviderBuilder Register<T>(
+        this DataProviderBuilder builder,
+        Func<DataProvider, ResolvedData<T>> factory)
+        where T : class
+        => builder.Register((p, _) => factory(p));
+    
+    public static DataProviderBuilder Register<T>(
+        this DataProviderBuilder builder,
+        Func<ResolvedData<T>> factory)
+        where T : class
+        => builder.Register((_, _) => factory());
+}
+
+public static class DataProviderBuilderStructExtensions
+{
+    public static DataProviderBuilder Register<T>(
+        this DataProviderBuilder builder,
+        Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
+        where T : struct
+    {
+        builder.RegisterInternal(factory);
+        builder.RegisterInternal<T?>((p, r) =>
+        {
+            var result = factory(p, r);
+            return result.IsResolved 
+                ? result.Value 
+                : ResolvedData<T?>.NoData;
+        });
+        return builder;
+    }
+
+    public static DataProviderBuilder Register<T>(
+        this DataProviderBuilder builder,
+        Func<DataProvider, ResolvedData<T>> factory)
+        where T : struct
+        => builder.Register((p, _) => factory(p));
+    
+    public static DataProviderBuilder Register<T>(
+        this DataProviderBuilder builder,
+        Func<ResolvedData<T>> factory)
+        where T : struct
+        => builder.Register((_, _) => factory());
 }
