@@ -8,8 +8,18 @@ public sealed class DataProviderBuilder
     {
         var type = typeof(T);
         _factories[type] = factory;
+        if (type.IsValueType)
+        {
+            _factories[typeof(Nullable<>).MakeGenericType(type)] = factory;
+        }
         return this;
     }
+    
+    public DataProviderBuilder Register<T>(Func<DataProvider, ResolvedData<T>> factory)
+        => Register((p, _) => factory(p));
+    
+    public DataProviderBuilder Register<T>(Func<ResolvedData<T>> factory)
+        => Register((_, _) => factory());
 
     public DataProviderBuilder With(IDataProviderCustomization customization)
     {
