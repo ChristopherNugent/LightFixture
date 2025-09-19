@@ -24,6 +24,19 @@ public sealed class DataProviderTests
         provider.Resolve<decimal>().Value.ShouldBe(9);
         provider.Resolve<decimal?>().Value.ShouldBe(10);
     }
+
+    [Fact]
+    public void ResolveStrings()
+    {
+        var provider = GetDefaultProvider();
+        
+        Guid.TryParse(provider.Resolve<string>(), out _).ShouldBeTrue();
+        provider.Resolve<string>(new CreationRequest("PropertyName")).Value
+            .Split("_", 2)
+            .ShouldSatisfyAllConditions(
+                x => x[0].ShouldBe("PropertyName"),
+                x => Guid.TryParse(x[1], out _).ShouldBeTrue());
+    }
     
     private static DataProvider GetDefaultProvider() => new DataProviderBuilder().Build();
 }
