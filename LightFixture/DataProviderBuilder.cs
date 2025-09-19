@@ -1,8 +1,16 @@
-﻿namespace LightFixture;
+﻿using LightFixture.Providers;
+
+namespace LightFixture;
 
 public sealed class DataProviderBuilder
 {
     private readonly Dictionary<Type, object> _factories = new();
+
+    public DataProviderBuilder()
+    {
+        Customize(NumericProvider.Instance);
+        Customize(StringProvider.Instance);
+    }
     
     public DataProviderBuilder Register<T>(Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
     {
@@ -21,7 +29,7 @@ public sealed class DataProviderBuilder
     public DataProviderBuilder Register<T>(Func<ResolvedData<T>> factory)
         => Register((_, _) => factory());
 
-    public DataProviderBuilder With(IDataProviderCustomization customization)
+    public DataProviderBuilder Customize(IDataProviderCustomization customization)
     {
         customization.Apply(this);
         return this;
