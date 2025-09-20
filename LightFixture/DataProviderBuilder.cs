@@ -10,6 +10,7 @@ public sealed class DataProviderBuilder
     {
         Customize(NumericProvider.Instance);
         Customize(StringProvider.Instance);
+        Customize(GuidProvider.Instance);
     }
     
     internal DataProviderBuilder RegisterInternal<T>(Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
