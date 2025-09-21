@@ -10,7 +10,7 @@ internal sealed class StringProvider : IDataProviderCustomization
 
     public void Apply(DataProviderBuilder builder)
     {
-        builder.Register<string>((_, request) => request?.PropertyName switch
+        builder.Register<string>(static (_, request) => request?.PropertyName switch
         {
             null => Guid.NewGuid().ToString(),
             _ => $"{request.PropertyName}_{Guid.NewGuid()}"

@@ -3,12 +3,12 @@ namespace LightFixture.Providers;
 internal sealed class NumericProvider : IDataProviderCustomization
 {
     public static readonly NumericProvider Instance = new();
+    
+    private long _iteration;
 
     private NumericProvider()
     {
     }
-
-    private long _iteration;
         
     public void Apply(DataProviderBuilder builder)
     {
