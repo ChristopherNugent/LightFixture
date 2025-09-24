@@ -15,3 +15,8 @@ public readonly struct ResolvedData<T>
     
     public static implicit operator T(ResolvedData<T> resolvedData) => resolvedData.Value;
 }
+
+public static class ResolvedData
+{
+    public static ResolvedData<T> FromValue<T>(T value) => value;
+}

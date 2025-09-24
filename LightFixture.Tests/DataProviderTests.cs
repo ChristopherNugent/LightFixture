@@ -31,7 +31,7 @@ public sealed class DataProviderTests
         var provider = GetDefaultProvider();
         
         Guid.TryParse(provider.Resolve<string>(), out _).ShouldBeTrue();
-        provider.Resolve<string>(new CreationRequest("PropertyName")).Value
+        provider.Resolve<string>(new CreationRequest(typeof(string),"PropertyName")).Value
             .Split("_", 2)
             .ShouldSatisfyAllConditions(
                 x => x[0].ShouldBe("PropertyName"),

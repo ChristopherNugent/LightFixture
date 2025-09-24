@@ -57,7 +57,14 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                code.AppendLine($"{property.Name} = provider.Resolve<{GetFullTypeName(property.Type)}>(new global::LightFixture.CreationRequest(\"{property.Name}\")),");
+                code.AppendLine($"{property.Name} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
+                    .Indent()
+                    .AppendLine("new global::LightFixture.CreationRequest(")
+                    .Indent()
+                    .AppendLine($"typeof({GetFullTypeName(property.Type)}),")
+                    .AppendLine($"\"{property.Name}\")),")
+                    .Outdent()
+                    .Outdent();
             }
 
             code.CloseBlock("};")
@@ -89,7 +96,10 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
     private static string GetFullTypeName(ITypeSymbol type) => type switch
     {
         INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable => GetFullTypeName(nullable.TypeArguments[0]),
+        { SpecialType: SpecialType.None, IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
+            => $"global::{type.ToDisplayString()}".Replace("?", string.Empty),
         { SpecialType: SpecialType.None } => $"global::{type.ToDisplayString()}",
+        { SpecialType: SpecialType.System_String } => "string",
         _ => type.ToDisplayString(),
     };
     
