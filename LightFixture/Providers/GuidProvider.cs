@@ -10,6 +10,6 @@ internal sealed class GuidProvider : IDataProviderCustomization
 
     public void Apply(DataProviderBuilder builder)
     {
-        builder.Register<Guid>(static (_, _) => Guid.NewGuid());
+        builder.Register<Guid>(static () => Guid.NewGuid());
     }
 }

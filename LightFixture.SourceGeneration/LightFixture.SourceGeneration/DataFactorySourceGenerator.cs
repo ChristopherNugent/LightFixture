@@ -9,14 +9,15 @@ namespace LightFixture.SourceGeneration;
 public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 {
     private const string AttributeFqn = "LightFixture.DataFactoryAttribute";
-    
+    private const string DataProviderFqn = "global::LightFixture.DataProvider";
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var targetSymbols = context.SyntaxProvider.ForAttributeWithMetadataName(
             AttributeFqn,
             (node, _) => node is ClassDeclarationSyntax,
             (ctx, _) => ctx.TargetSymbol);
-        
+
         context.RegisterSourceOutput(targetSymbols, HandleSymbol);
     }
 
@@ -26,7 +27,119 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         {
             return;
         }
+
+        var rootFactories = GetRootFactories(namedType);
+        var typesToGenerate = WalkTypes(rootFactories.Values);
+        var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
+
+        var code = new CodeBuilder();
         
-        var exploredTypes = new Dictionary<ISymbol, string>(SymbolEqualityComparer.Default);
+        code
+            .AppendLine("using LightFixture;")
+            .AppendLine()
+            .AppendLine($"namespace {namedType.ContainingNamespace.ToDisplayString()};")
+            .AppendLine()
+            .AppendLine($"partial class {namedType.Name} : global::LightFixture.IDataProviderCustomization")
+            .OpenBlock();
+
+        var factoryNumber = 0;
+        foreach (var type in typesToGenerate)
+        {
+            factoryLookup[type] = factoryNumber;
+            code.AppendLine($"private static {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
+                .AppendLine("=> new()")
+                .OpenBlock();
+
+            foreach (var member in type.GetMembers())
+            {
+                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property)
+                {
+                    continue;
+                }
+
+                code.AppendLine($"{property.Name} = provider.Resolve<{GetFullTypeName(property.Type)}>(),");
+            }
+
+            code.CloseBlock("};")
+                .AppendLine();
+            
+            factoryNumber++;
+        }
+
+        foreach (var kvp in rootFactories)
+        {
+            var methodName = kvp.Key;
+            var returnType  = kvp.Value;
+            code.AppendLine($"public partial {GetFullTypeName(returnType)} {methodName}() => default;");
+        }
+        
+        code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
+            .OpenBlock();
+        foreach (var kvp in factoryLookup)
+        {
+            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>(static (p, _) => _Factory{kvp.Value}(p));");
+        }
+
+        code.CloseBlock();
+        code.CloseBlock();
+        
+        context.AddSource(namedType.Name + ".cs", code.ToString());
+    }
+
+    private static string GetFullTypeName(ITypeSymbol type) => type switch
+    {
+        INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable => GetFullTypeName(nullable.TypeArguments[0]),
+        { SpecialType: SpecialType.None } => $"global::{type.ToDisplayString()}",
+        _ => type.ToDisplayString(),
+    };
+    
+    private static Dictionary<string, ITypeSymbol> GetRootFactories(INamedTypeSymbol symbol)
+    {
+        var dict = new Dictionary<string, ITypeSymbol>();
+        foreach (var member in symbol.GetMembers())
+        {
+            if (member is not IMethodSymbol {  Parameters.Length: 0, Name: not ".ctor" } method)
+            {
+                continue;
+            }
+            
+            dict.Add(method.Name, method.ReturnType);
+        }
+        
+        return dict;
+    }
+
+    private static IEnumerable<ITypeSymbol> WalkTypes(IEnumerable<ITypeSymbol> symbols)
+    {
+        var explored = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+        var queue = new Queue<ITypeSymbol>(symbols);
+
+        while (queue.Count > 0)
+        {
+            var item = queue.Dequeue();
+            yield return item;
+            var members = item.GetMembers();
+            foreach (var member in members)
+            {
+                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property)
+                {
+                    continue;
+                }
+
+                if (!IsNativeType(property.Type) && explored.Add(property.Type))
+                {
+                    queue.Enqueue(property.Type);
+                }
+            }
+        }
+    }
+
+    private static bool IsNativeType(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable)
+        {
+            return IsNativeType(nullable.TypeArguments[0]);
+        }
+        return type.SpecialType is not SpecialType.None;
     }
 }
