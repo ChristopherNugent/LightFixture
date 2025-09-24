@@ -11,6 +11,8 @@ public class SampleDataOuter
     public string? SomeString { get; set; }
     
     public SampleDataInner? SomeInner { get; set; }
+    
+    public SampleDataOuter? Recursion { get; set; }
 }
 
 public class SampleDataInner

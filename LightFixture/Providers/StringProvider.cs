@@ -13,7 +13,7 @@ internal sealed class StringProvider : IDataProviderCustomization
         builder.Register<string>(static (_, request) => request?.PropertyName switch
         {
             null => Guid.NewGuid().ToString(),
-            _ => $"{request.PropertyName}_{Guid.NewGuid()}"
+            _ => $"{request.Value.PropertyName}_{Guid.NewGuid()}"
         });
     }
 }

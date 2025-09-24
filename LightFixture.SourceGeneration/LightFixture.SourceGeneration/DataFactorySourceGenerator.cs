@@ -57,7 +57,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                code.AppendLine($"{property.Name} = provider.Resolve<{GetFullTypeName(property.Type)}>(),");
+                code.AppendLine($"{property.Name} = provider.Resolve<{GetFullTypeName(property.Type)}>(new global::LightFixture.CreationRequest(\"{property.Name}\")),");
             }
 
             code.CloseBlock("};")
