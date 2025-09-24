@@ -22,6 +22,11 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
     private static void HandleSymbol(SourceProductionContext context, ISymbol symbol)
     {
-        var exploredTypes = new HashSet<string>();
+        if (symbol is not INamedTypeSymbol namedType)
+        {
+            return;
+        }
+        
+        var exploredTypes = new Dictionary<ISymbol, string>(SymbolEqualityComparer.Default);
     }
 }

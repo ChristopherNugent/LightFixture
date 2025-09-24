@@ -6,4 +6,8 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\LightFixture.SourceGeneration\LightFixture.SourceGeneration\LightFixture.SourceGeneration.csproj" />
+    </ItemGroup>
+
 </Project>
