@@ -4,6 +4,9 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <PackageId>CNugent.LightFixture</PackageId>
+        <Version>0.1.0-beta.1</Version>
+        <Authors>cnugent</Authors>
     </PropertyGroup>
 
     <ItemGroup>
