@@ -5,10 +5,8 @@
         <IsPackable>false</IsPackable>
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
-
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <IsRoslynComponent>true</IsRoslynComponent>
-
         <RootNamespace>LightFixture.SourceGeneration</RootNamespace>
         <PackageId>LightFixture.SourceGeneration</PackageId>
     </PropertyGroup>
