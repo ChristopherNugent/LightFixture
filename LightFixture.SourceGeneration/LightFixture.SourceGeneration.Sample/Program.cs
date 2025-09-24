@@ -1,4 +1,5 @@
 
+using System;
 using LightFixture;
 using LightFixture.SourceGeneration.Sample;
 
@@ -9,4 +10,4 @@ var dataProvider = new DataProviderBuilder()
 var data = dataProvider.Resolve<SampleDataOuter>();
 var data2 = dataProvider.Resolve<SampleDataInner>();
 
-var a = 1;
+Console.WriteLine();
