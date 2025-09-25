@@ -5,16 +5,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>CNugent.LightFixture</PackageId>
-        <Version>0.1.0-beta.1</Version>
+        <Version>0.1.0</Version>
         <Authors>cnugent</Authors>
     </PropertyGroup>
-
+    
     <ItemGroup>
-        <ProjectReference Include="..\LightFixture.SourceGeneration\LightFixture.SourceGeneration.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="..\LightFixture.SourceGeneration\bin\$(Configuration)\$(TargetFramework)\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+        <None Include="..\LightFixture.SourceGeneration\bin\$(Configuration)\netstandard2.0\*.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     </ItemGroup>
 
 </Project>
