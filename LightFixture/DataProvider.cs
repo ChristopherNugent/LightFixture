@@ -76,6 +76,12 @@ public sealed class DataProvider
             return factory;
         }
 
+        if (Nullable.GetUnderlyingType(typeToResolve) is {} underlyingType
+            && _factories.TryGetValue(underlyingType, out factory))
+        {
+            return factory;
+        }
+
         if (_factories.TryGetValue(typeToResolve.GetGenericTypeDefinition(), out factory))
         {
             return factory;

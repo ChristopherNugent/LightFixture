@@ -36,10 +36,10 @@ internal sealed class CollectionProvider : IDataProviderCustomization
     
     public void Apply(DataProviderBuilder builder)
     {
-        builder.RegisterInternal(typeof(List<>), MakeEnumerableAcceptor);
-        builder.RegisterInternal(typeof(HashSet<>), MakeEnumerableAcceptor);
-        builder.RegisterInternal(typeof(Queue<>), MakeEnumerableAcceptor);
-        builder.RegisterInternal(typeof(Stack<>), MakeEnumerableAcceptor);
+        builder.Register(typeof(List<>), MakeEnumerableAcceptor);
+        builder.Register(typeof(HashSet<>), MakeEnumerableAcceptor);
+        builder.Register(typeof(Queue<>), MakeEnumerableAcceptor);
+        builder.Register(typeof(Stack<>), MakeEnumerableAcceptor);
     }
 
     private sealed class TypedEnumerableProvider<T> : IEnumerableProvider

@@ -13,10 +13,10 @@ internal sealed class NumericProvider : IDataProviderCustomization
     public void Apply(DataProviderBuilder builder)
     {
         builder
-            .Register<int>(() => (int) Interlocked.Increment(ref _iteration))
-            .Register<long>(() => Interlocked.Increment(ref _iteration))
-            .Register<double>(() => (double) Interlocked.Increment(ref _iteration))
-            .Register<float>(() => (float) Interlocked.Increment(ref _iteration))
-            .Register<decimal>(() => Interlocked.Increment(ref _iteration));
+            .Register<int>((_, _) => (int) Interlocked.Increment(ref _iteration))
+            .Register<long>((_, _) => Interlocked.Increment(ref _iteration))
+            .Register<double>((_, _) => (double) Interlocked.Increment(ref _iteration))
+            .Register<float>((_, _) => (float) Interlocked.Increment(ref _iteration))
+            .Register<decimal>((_, _) => Interlocked.Increment(ref _iteration));
     }
 }
