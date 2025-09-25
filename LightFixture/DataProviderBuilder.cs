@@ -14,19 +14,26 @@ public sealed class DataProviderBuilder
         Customize(CollectionProvider.Instance);
     }
     
-    public DataProviderBuilder Register<T>(Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
+    public DataProviderBuilder Register<T>(
+        Func<DataProvider, CreationRequest?, ResolvedData<T>> factory,
+        bool overrideExisting = false)
     {
         var type = typeof(T);
         return Register(
             type,
-            (p, c) => factory(p, c).AsNonGeneric());
+            (p, c) => factory(p, c).AsNonGeneric(),
+            overrideExisting);
     }
 
     public DataProviderBuilder Register(
         Type type,
-        Func<DataProvider, CreationRequest?, ResolvedData<object>> factory)
+        Func<DataProvider, CreationRequest?, ResolvedData<object>> factory,
+        bool overrideExisting = false)
     {
-        _factories[type] = factory;
+        if (overrideExisting || !_factories.ContainsKey(type))
+        {
+            _factories[type] = factory;
+        }
         return this;
     }
 
