@@ -88,7 +88,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
             code.AppendLine(
                     $"private static {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
-                .Append("=> new(");
+                .OpenBlock()
+                .Append($"var o = new {GetFullTypeName(type)}(");
 
             for (var i = 0; i < constructorParameters.Length; i++)
             {
@@ -104,9 +105,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 }
             }
 
-            code.AppendLine(")")
-                .OpenBlock();
+            code.AppendLine(");");
 
+            var count = 0;
             foreach (var member in type.GetMembers())
             {
                 if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
@@ -115,17 +116,24 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                code.AppendLine($"{property.Name} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
+                code.AppendLine($"var o{count} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
                     .Indent()
                     .AppendLine("new global::LightFixture.CreationRequest(")
                     .Indent()
                     .AppendLine($"typeof({GetFullTypeName(property.Type)}),")
-                    .AppendLine($"\"{property.Name}\")).Value,")
+                    .AppendLine($"\"{property.Name}\"));")
                     .Outdent()
-                    .Outdent();
+                    .Outdent()
+                    .AppendLine($"if(o{count}.IsResolved)")
+                    .OpenBlock()
+                    .AppendLine($"o.{property.Name} = o{count}.Value;")
+                    .CloseBlock();
+                
+                count++;
             }
 
-            code.CloseBlock("};")
+            code.AppendLine("return o;")
+                .CloseBlock("}")
                 .AppendLine();
         }
     }
