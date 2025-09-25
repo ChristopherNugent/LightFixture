@@ -28,7 +28,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return;
         }
 
-        var rootFactories = GetRootFactories(namedType);
+        var rootFactories = GetRootFactories(namedType,context.CancellationToken);
         var typesToGenerate = WalkTypes(rootFactories.Values);
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
@@ -45,6 +45,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         var factoryNumber = 0;
         foreach (var type in typesToGenerate)
         {
+            context.CancellationToken.ThrowIfCancellationRequested();
+            
             factoryLookup[type] = factoryNumber;
             code.AppendLine($"private static {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
                 .AppendLine("=> new()")
@@ -103,11 +105,12 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         _ => type.ToDisplayString(),
     };
     
-    private static Dictionary<string, ITypeSymbol> GetRootFactories(INamedTypeSymbol symbol)
+    private static Dictionary<string, ITypeSymbol> GetRootFactories(INamedTypeSymbol symbol, CancellationToken token)
     {
         var dict = new Dictionary<string, ITypeSymbol>();
         foreach (var member in symbol.GetMembers())
         {
+            token.ThrowIfCancellationRequested();
             if (member is not IMethodSymbol {  Parameters.Length: 0, Name: not ".ctor" } method)
             {
                 continue;
