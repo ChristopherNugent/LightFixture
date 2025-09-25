@@ -23,6 +23,12 @@ public class SampleDataOuter
     public Queue<SampleDataInner>? InnerQueue { get; set; }
     
     public Stack<SampleDataInner>? InnerStack { get; set; }
+    
+    public Dictionary<string, int>?  Dictionary { get; set; }
+    
+    public IReadOnlyDictionary<double, string>? ReadOnlyDictionary { get; set; }
+    
+    public IDictionary<SampleDataInner, SampleDataInner>? ComplexDictionary { get; set; }
 }
 
 public class SampleDataInner

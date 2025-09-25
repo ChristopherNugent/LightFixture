@@ -15,12 +15,11 @@ internal sealed class CollectionProvider : IDataProviderCustomization
 
     private ResolvedData<object> MakeEnumerableAcceptor(DataProvider provider, CreationRequest? creationRequest = null)
     {
-        if (creationRequest?.RequestedType is not { GenericTypeArguments.Length: 1 } listType)
+        if (creationRequest?.RequestedType?.GenericTypeArguments is not [var elementType])
         {
             return ResolvedData<object>.NoData;
         }
 
-        var elementType = listType.GenericTypeArguments[0];
         if(!_providers.TryGetValue(elementType, out var seriesProvider))
         {
             seriesProvider = (IEnumerableProvider)Activator.CreateInstance(

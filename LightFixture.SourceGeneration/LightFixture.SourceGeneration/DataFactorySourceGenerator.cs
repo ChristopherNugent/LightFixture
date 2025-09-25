@@ -64,7 +64,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                     .AppendLine("new global::LightFixture.CreationRequest(")
                     .Indent()
                     .AppendLine($"typeof({GetFullTypeName(property.Type)}),")
-                    .AppendLine($"\"{property.Name}\")),")
+                    .AppendLine($"\"{property.Name}\")).Value,")
                     .Outdent()
                     .Outdent();
             }

@@ -12,6 +12,7 @@ public sealed class DataProviderBuilder
         Customize(StringProvider.Instance);
         Customize(GuidProvider.Instance);
         Customize(CollectionProvider.Instance);
+        Customize(DictionaryProvider.Instance);
     }
     
     public DataProviderBuilder Register<T>(

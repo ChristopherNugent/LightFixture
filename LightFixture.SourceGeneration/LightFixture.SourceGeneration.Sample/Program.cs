@@ -9,10 +9,10 @@ var dataProvider = new DataProviderBuilder()
 
 var data = dataProvider.Resolve<SampleDataOuter>();
 
-var json = JsonSerializer.Serialize(
-    data,
-    new JsonSerializerOptions()
-    {
-        WriteIndented = true,
-    });
-Console.WriteLine(json);
+// var json = JsonSerializer.Serialize(
+//     data,
+//     new JsonSerializerOptions()
+//     {
+//         WriteIndented = true,
+//     });
+Console.WriteLine();
