@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LightFixture.SourceGeneration.Sample;
+namespace LightFixture.Benchmark;
 
 [DataFactory]
 public partial class SampleDataProvider
