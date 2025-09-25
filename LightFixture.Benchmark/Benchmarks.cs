@@ -10,18 +10,31 @@ public class Benchmarks
         .Customize(new SampleDataProvider())
         .Build();
     
-    private static readonly Fixture Fixture = new Fixture();
-    
+    private static readonly Fixture Fixture = new();
+
     [Benchmark]
-    public SampleDataOuter LightFixture()
+    public SampleDataOuter LightFixtureComplex()
     {
         return Provider.Resolve<SampleDataOuter>();
     }
 
     [Benchmark]
-    public SampleDataOuter AutoFixture()
+    public SampleDataOuter AutoFixtureComplex()
     {
         return Fixture.Create<SampleDataOuter>();
     }
+    
+    [Benchmark]
+    public SampleDataInner LightFixtureSimple()
+    {
+        return Provider.Resolve<SampleDataInner>();
+    }
+
+    [Benchmark]
+    public SampleDataInner AutoFixtureSimple()
+    {
+        return Fixture.Create<SampleDataInner>();
+    }
+    
 }
 
