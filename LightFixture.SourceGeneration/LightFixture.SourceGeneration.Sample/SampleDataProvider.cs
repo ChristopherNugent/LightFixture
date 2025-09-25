@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace LightFixture.SourceGeneration.Sample;
 
 [DataFactory]
@@ -13,6 +15,8 @@ public class SampleDataOuter
     public SampleDataInner? SomeInner { get; set; }
     
     public SampleDataOuter? Recursion { get; set; }
+    
+    public List<SampleDataInner>? InnerList { get; set; }
 }
 
 public class SampleDataInner

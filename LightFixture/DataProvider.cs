@@ -13,20 +13,28 @@ public sealed class DataProvider
 
     public ResolvedData<T> Resolve<T>(CreationRequest? creationRequest = null)
     {
-        var resolvedType = typeof(T);
+        creationRequest = new(typeof(T), creationRequest?.PropertyName);
+        return Resolve(creationRequest.Value).AsGeneric<T>();
+    }
+
+    public ResolvedData<object> Resolve(CreationRequest creationRequest)
+    {
+        if (creationRequest.RequestedType is not { } resolvedType)
+        {
+            return ResolvedData<object>.NoData;
+        }
+        
         if (!_typeStack.Add(resolvedType))
         {
-            return ResolvedData<T>.NoData;
+            return default;
         }
-        creationRequest ??= new (typeof(T), null);
 
-        var factory = _factories[resolvedType];
+        var factory = GetFactory(resolvedType);
         var createdObject = factory switch
         {
-            Func<DataProvider, CreationRequest?, ResolvedData<T>> f => f(this, creationRequest),
-            Func<DataProvider, CreationRequest?, ResolvedData<object>> f => ResolvedData.FromValue((T)f(
+            Func<DataProvider, CreationRequest?, ResolvedData<object>> f => f(
                 this,
-                creationRequest)),
+                creationRequest),
             _ => throw new InvalidOperationException($"Unknown factory type: {factory.GetType().FullName}")
         };
         
@@ -34,28 +42,31 @@ public sealed class DataProvider
         return createdObject;
     }
 
-    public ResolvedData<object> Resolve(CreationRequest? creationRequest = null)
+    internal IEnumerable<object> GetMany(CreationRequest creationRequest, int count = 3)
     {
-        if (creationRequest?.RequestedType is not { } resolvedType)
+        for (var i = 0; i < count; i++)
         {
-            return ResolvedData<object>.NoData;
+            var result = Resolve(creationRequest);
+            if (!result.IsResolved)
+            {
+                yield break;
+            }
+            yield return result.Value;
         }
-        if (!_typeStack.Add(resolvedType))
-        {
-            return default;
-        }
-        creationRequest ??= new (typeof(T), null);
+    }
 
-        var factory = _factories[resolvedType];
-        var createdObject = factory switch
+    private object GetFactory(Type typeToResolve)
+    {
+        if (_factories.TryGetValue(typeToResolve, out var factory))
         {
-            Func<DataProvider, CreationRequest?, ResolvedData<object>> f => ResolvedData.FromValue(f(
-                this,
-                creationRequest)),
-            _ => throw new InvalidOperationException($"Unknown factory type: {factory.GetType().FullName}")
-        };
+            return factory;
+        }
+
+        if (_factories.TryGetValue(typeToResolve.GetGenericTypeDefinition(), out factory))
+        {
+            return factory;
+        }
         
-        _typeStack.Remove(resolvedType);
-        return createdObject;
+        throw new KeyNotFoundException($"Unknown factory type: {typeToResolve.FullName}");
     }
 }

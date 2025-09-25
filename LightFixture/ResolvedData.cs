@@ -19,4 +19,12 @@ public readonly struct ResolvedData<T>
 public static class ResolvedData
 {
     public static ResolvedData<T> FromValue<T>(T value) => value;
+    
+    internal static ResolvedData<object> AsNonGeneric<T>(this ResolvedData<T> resolvedData) => resolvedData.IsResolved
+        ? resolvedData.Value!
+        : ResolvedData<object>.NoData;
+
+    internal static ResolvedData<T> AsGeneric<T>(this ResolvedData<object> resolvedData) => resolvedData.IsResolved
+        ? (T)resolvedData.Value
+        : ResolvedData<T>.NoData;
 }

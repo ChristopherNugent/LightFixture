@@ -11,16 +11,19 @@ public sealed class DataProviderBuilder
         Customize(NumericProvider.Instance);
         Customize(StringProvider.Instance);
         Customize(GuidProvider.Instance);
+        Customize(CollectionProvider.Instance);
     }
     
     internal DataProviderBuilder RegisterInternal<T>(Func<DataProvider, CreationRequest?, ResolvedData<T>> factory)
     {
         var type = typeof(T);
-        _factories[type] = factory;
-        return this;
+        return RegisterInternal(
+            type,
+            (p, c) => factory(p, c).AsNonGeneric());
     }
 
-    internal DataProviderBuilder RegisterInternal(Type type,
+    internal DataProviderBuilder RegisterInternal(
+        Type type,
         Func<DataProvider, CreationRequest?, ResolvedData<object>> factory)
     {
         _factories[type] = factory;
@@ -54,21 +57,6 @@ public static class DataProviderBuilderClassExtensions
         this DataProviderBuilder builder,
         Func<ResolvedData<T>> factory)
         where T : class
-        => builder.Register((_, _) => factory());
-    
-    public static DataProviderBuilder Register(
-        this DataProviderBuilder builder,
-        Func<DataProvider, CreationRequest?, ResolvedData<object>> factory)
-        => builder.RegisterInternal(factory);
-    
-    public static DataProviderBuilder Register(
-        this DataProviderBuilder builder,
-        Func<DataProvider, ResolvedData<object>> factory)
-        => builder.Register((p, _) => factory(p));
-    
-    public static DataProviderBuilder Register(
-        this DataProviderBuilder builder,
-        Func<ResolvedData<object>> factory)
         => builder.Register((_, _) => factory());
 }
 

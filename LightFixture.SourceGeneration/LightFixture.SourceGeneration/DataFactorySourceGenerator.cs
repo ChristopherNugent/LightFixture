@@ -150,6 +150,17 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         {
             return IsNativeType(nullable.TypeArguments[0]);
         }
-        return type.SpecialType is not SpecialType.None;
+
+        if (type.SpecialType is not SpecialType.None)
+        {
+            return true;
+        }
+
+        if (type.ContainingNamespace.ToDisplayString() is "System.Collections.Generic")
+        {
+            return true;
+        }
+        
+        return false;
     }
 }

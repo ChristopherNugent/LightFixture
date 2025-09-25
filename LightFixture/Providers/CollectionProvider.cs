@@ -4,26 +4,34 @@ namespace LightFixture.Providers;
 
 internal sealed class CollectionProvider : IDataProviderCustomization
 {
-    private const int CollectionCount = 3;
-    
-    private static object? MakeList(DataProvider p, CreationRequest? creationRequest = null)
+    public static readonly CollectionProvider Instance = new CollectionProvider();
+
+    private CollectionProvider()
+    {
+    }
+
+    private static ResolvedData<object> MakeIList(DataProvider p, CreationRequest? creationRequest = null)
     {
         if (creationRequest?.RequestedType is not { GenericTypeArguments.Length: 1 } listType)
         {
-            return null;
+            return ResolvedData<object>.NoData;
         }
 
         var elementType = listType.GenericTypeArguments[0];
+        var enumerable = p.GetMany(creationRequest.Value with { RequestedType = elementType });
         
         var list = (IList) Activator.CreateInstance(creationRequest.Value.RequestedType)!;
-        for (var i = 0; i < CollectionCount; i++)
+
+        foreach (var o in enumerable)
         {
-            list.Add(p.Resolve(elementType))   
+            list.Add(o);
         }
+
+        return (object) list;
     }
     
     public void Apply(DataProviderBuilder builder)
     {
-        builder.Register(typeof(List<>),);
+        builder.RegisterInternal(typeof(List<>), static (p, r) => MakeIList(p, r));
     }
 }
