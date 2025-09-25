@@ -17,6 +17,12 @@ public class SampleDataOuter
     public SampleDataOuter? Recursion { get; set; }
     
     public List<SampleDataInner>? InnerList { get; set; }
+    
+    public HashSet<string>? InnerHashSet { get; set; }
+    
+    public Queue<SampleDataInner>? InnerQueue { get; set; }
+    
+    public Stack<SampleDataInner>? InnerStack { get; set; }
 }
 
 public class SampleDataInner
@@ -30,4 +36,6 @@ public class SampleDataInner
     public long? Long { get; set; }
     
     public decimal Decimal { get; set; }
+
+    public string? InnerString { get; set; }
 }

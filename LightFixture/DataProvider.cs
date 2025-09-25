@@ -41,6 +41,20 @@ public sealed class DataProvider
         _typeStack.Remove(resolvedType);
         return createdObject;
     }
+    
+    internal IEnumerable<T> GetMany<T>(CreationRequest? creationRequest = null, int count = 3)
+    {
+        var request = new CreationRequest(typeof(T), creationRequest?.PropertyName);
+        for (var i = 0; i < count; i++)
+        {
+            var result = Resolve(request);
+            if (!result.IsResolved)
+            {
+                yield break;
+            }
+            yield return (T) result.Value;
+        }
+    }
 
     internal IEnumerable<object> GetMany(CreationRequest creationRequest, int count = 3)
     {
