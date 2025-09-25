@@ -45,6 +45,7 @@ internal sealed class DictionaryProvider : IDataProviderCustomization
     }
 
     private sealed class TypedDictionaryProvider<TKey, TValue> : IDictionaryProvider
+        where TKey : notnull
     {
         public object Get(DataProvider provider, CreationRequest request)
         {
