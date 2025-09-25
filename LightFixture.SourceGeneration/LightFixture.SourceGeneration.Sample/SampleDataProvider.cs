@@ -29,6 +29,8 @@ public class SampleDataOuter
     public IReadOnlyDictionary<double, string>? ReadOnlyDictionary { get; set; }
     
     public IDictionary<SampleDataInner, SampleDataInner>? ComplexDictionary { get; set; }
+    
+    public ConstructorType? ConstructorType { get; set; }
 }
 
 public class SampleDataInner
@@ -44,4 +46,16 @@ public class SampleDataInner
     public decimal Decimal { get; set; }
 
     public string? InnerString { get; set; }
+}
+
+public sealed class ConstructorType
+{
+    public ConstructorType(int someInt)
+    {
+        SomeInt = someInt;
+    }
+    
+    public int SomeInt { get; set; }
+
+    public string OtherProperty { get; set; } = "";
 }

@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,7 +12,6 @@ namespace LightFixture.SourceGeneration;
 public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 {
     private const string AttributeFqn = "LightFixture.DataFactoryAttribute";
-    private const string DataProviderFqn = "global::LightFixture.DataProvider";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -28,12 +30,12 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return;
         }
 
-        var rootFactories = GetRootFactories(namedType,context.CancellationToken);
+        var rootFactories = GetRootFactories(namedType, context.CancellationToken);
         var typesToGenerate = WalkTypes(rootFactories.Values);
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
-        
+
         code
             .AppendLine("using LightFixture;")
             .AppendLine()
@@ -46,15 +48,69 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         foreach (var type in typesToGenerate)
         {
             context.CancellationToken.ThrowIfCancellationRequested();
-            
+            WriteAnonymousFactory(type);
+            factoryNumber++;
+        }
+
+        foreach (var kvp in rootFactories)
+        {
+            var methodName = kvp.Key;
+            var returnType = kvp.Value;
+            code.AppendLine($"public partial {GetFullTypeName(returnType)} {methodName}() => default;");
+        }
+
+        code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
+            .OpenBlock();
+        foreach (var kvp in factoryLookup)
+        {
+            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>(static (p, _) => _Factory{kvp.Value}(p));");
+        }
+
+        code.CloseBlock();
+        code.CloseBlock();
+
+        context.AddSource(namedType.Name + ".cs", code.ToString());
+
+        void WriteAnonymousFactory(ITypeSymbol type)
+        {
             factoryLookup[type] = factoryNumber;
-            code.AppendLine($"private static {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
-                .AppendLine("=> new()")
+
+            var constructor = type is INamedTypeSymbol nt
+                ? nt.Constructors
+                    .Where(c => c is { IsStatic: false, DeclaredAccessibility: Accessibility.Public })
+                    .OrderBy(x => x.Parameters.Length)
+                    .FirstOrDefault()
+                : null;
+            var constructorParameters = constructor?.Parameters ?? ImmutableArray<IParameterSymbol>.Empty;
+            var constructorParameterNames = new HashSet<string>(
+                constructorParameters.Select(x => x.Name),
+                StringComparer.InvariantCultureIgnoreCase);
+
+            code.AppendLine(
+                    $"private static {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
+                .Append("=> new(");
+
+            for (var i = 0; i < constructorParameters.Length; i++)
+            {
+                var parameter = constructorParameters[i];
+                code.Append($"provider.Resolve<{GetFullTypeName(parameter.Type)}>(")
+                    .Append("new global::LightFixture.CreationRequest(")
+                    .Append($"typeof({GetFullTypeName(parameter.Type)}),")
+                    .Append($"\"{parameter.Name}\")).Value");
+
+                if (i < constructorParameters.Length - 1)
+                {
+                    code.Append(", ");
+                }
+            }
+
+            code.AppendLine(")")
                 .OpenBlock();
 
             foreach (var member in type.GetMembers())
             {
-                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property)
+                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
+                    || constructorParameterNames.Contains(property.Name))
                 {
                     continue;
                 }
@@ -71,54 +127,34 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
             code.CloseBlock("};")
                 .AppendLine();
-            
-            factoryNumber++;
         }
-
-        foreach (var kvp in rootFactories)
-        {
-            var methodName = kvp.Key;
-            var returnType  = kvp.Value;
-            code.AppendLine($"public partial {GetFullTypeName(returnType)} {methodName}() => default;");
-        }
-        
-        code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
-            .OpenBlock();
-        foreach (var kvp in factoryLookup)
-        {
-            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>(static (p, _) => _Factory{kvp.Value}(p));");
-        }
-
-        code.CloseBlock();
-        code.CloseBlock();
-        
-        context.AddSource(namedType.Name + ".cs", code.ToString());
     }
 
     private static string GetFullTypeName(ITypeSymbol type) => type switch
     {
-        INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable => GetFullTypeName(nullable.TypeArguments[0]),
+        INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable => GetFullTypeName(
+            nullable.TypeArguments[0]),
         { SpecialType: SpecialType.None, IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
             => $"global::{type.ToDisplayString()}".Replace("?", string.Empty),
         { SpecialType: SpecialType.None } => $"global::{type.ToDisplayString()}",
         { SpecialType: SpecialType.System_String } => "string",
         _ => type.ToDisplayString(),
     };
-    
+
     private static Dictionary<string, ITypeSymbol> GetRootFactories(INamedTypeSymbol symbol, CancellationToken token)
     {
         var dict = new Dictionary<string, ITypeSymbol>();
         foreach (var member in symbol.GetMembers())
         {
             token.ThrowIfCancellationRequested();
-            if (member is not IMethodSymbol {  Parameters.Length: 0, Name: not ".ctor" } method)
+            if (member is not IMethodSymbol { Parameters.Length: 0, Name: not ".ctor" } method)
             {
                 continue;
             }
-            
+
             dict.Add(method.Name, method.ReturnType);
         }
-        
+
         return dict;
     }
 
@@ -163,7 +199,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         {
             return true;
         }
-        
+
         return false;
     }
 }
