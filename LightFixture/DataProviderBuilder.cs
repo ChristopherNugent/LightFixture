@@ -9,12 +9,12 @@ public sealed class DataProviderBuilder
 
     public DataProviderBuilder()
     {
-        Customize(NumericProvider.Instance);
+        Customize(new NumericProvider());
         Customize(StringProvider.Instance);
         Customize(GuidProvider.Instance);
         Customize(CollectionProvider.Instance);
-        Customize(DictionaryProvider.Instance);
-        Customize(EnumProvider.Instance);
+        Customize(new DictionaryProvider());
+        Customize(new EnumProvider());
     }
     
     public DataProviderBuilder Register<T>(

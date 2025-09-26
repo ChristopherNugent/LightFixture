@@ -4,13 +4,7 @@ namespace LightFixture.Providers;
 
 internal sealed class EnumProvider : IDataProviderCustomization
 {
-    public static readonly EnumProvider Instance = new EnumProvider();
-
-    private readonly ConcurrentDictionary<Type, IEnumProvider> _factories = new();
-
-    private EnumProvider()
-    {
-    }
+    private static readonly ConcurrentDictionary<Type, IEnumProvider> Provider = new();
 
     private ResolvedData<object> GetEnum(DataProvider dataProvider, CreationRequest creationRequest)
     {
@@ -20,10 +14,10 @@ internal sealed class EnumProvider : IDataProviderCustomization
         }
         var enumType = creationRequest.RequestedType;
 
-        if (!_factories.TryGetValue(creationRequest.RequestedType, out var enumProvider))
+        if (!Provider.TryGetValue(creationRequest.RequestedType, out var enumProvider))
         {
             enumProvider = (IEnumProvider) Activator.CreateInstance(typeof(TypedEnumProvider<>).MakeGenericType(enumType))!;
-            _factories.TryAdd(creationRequest.RequestedType, enumProvider);
+            Provider.TryAdd(creationRequest.RequestedType, enumProvider);
         }
 
         return enumProvider.Get();

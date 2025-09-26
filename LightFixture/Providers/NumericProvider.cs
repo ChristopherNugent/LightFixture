@@ -2,13 +2,7 @@ namespace LightFixture.Providers;
 
 internal sealed class NumericProvider : IDataProviderCustomization
 {
-    public static readonly NumericProvider Instance = new();
-    
     private long _iteration;
-
-    private NumericProvider()
-    {
-    }
 
     private byte GetByte() => (byte)(Interlocked.Increment(ref _iteration) % (byte.MaxValue + 1L));
     

@@ -4,9 +4,7 @@ namespace LightFixture.Providers;
 
 internal sealed class DictionaryProvider : IDataProviderCustomization
 {
-    public static readonly DictionaryProvider Instance = new();
-    
-    private readonly ConcurrentDictionary<(Type, Type), IDictionaryProvider> _providers = new ();
+    private static readonly ConcurrentDictionary<(Type, Type), IDictionaryProvider> Providers = new ();
 
     private ResolvedData<object> MakeDictionary(DataProvider provider, CreationRequest? request)
     {
@@ -15,19 +13,15 @@ internal sealed class DictionaryProvider : IDataProviderCustomization
             return ResolvedData<object>.NoData;
         }
         
-        if(!_providers.TryGetValue((keyType, valueType), out var seriesProvider))
+        if(!Providers.TryGetValue((keyType, valueType), out var seriesProvider))
         {
             seriesProvider = (IDictionaryProvider)Activator.CreateInstance(
                 typeof(TypedDictionaryProvider<,>).MakeGenericType(keyType, valueType))!;
             
-            _providers.TryAdd((keyType, valueType), seriesProvider);
+            Providers.TryAdd((keyType, valueType), seriesProvider);
         }
         
         return seriesProvider.Get(provider, request.Value);
-    }
-    
-    private DictionaryProvider()
-    {
     }
     
     public void Apply(DataProviderBuilder builder)
@@ -35,8 +29,7 @@ internal sealed class DictionaryProvider : IDataProviderCustomization
         builder
             .Register(typeof(Dictionary<,>), MakeDictionary)
             .Register(typeof(IDictionary<,>), MakeDictionary)
-            .Register(typeof(IReadOnlyDictionary<,>), MakeDictionary)
-            ;
+            .Register(typeof(IReadOnlyDictionary<,>), MakeDictionary);
     }
 
     private interface IDictionaryProvider
@@ -64,6 +57,4 @@ internal sealed class DictionaryProvider : IDataProviderCustomization
             return dict;
         }
     }
-
- 
 }
