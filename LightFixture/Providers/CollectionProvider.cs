@@ -43,7 +43,7 @@ internal sealed class CollectionProvider : IDataProviderCustomization
 
     private sealed class TypedEnumerableProvider<T> : IEnumerableProvider
     {
-        private IEnumerable<T> GetItems(DataProvider provider, CreationRequest request) => provider.GetMany<T>(request);
+        private IEnumerable<T> GetItems(DataProvider provider, CreationRequest request) => provider.ResolveMany<T>(request);
 
         public object Get(DataProvider provider, CreationRequest request) => GetItems(provider, request);
     }

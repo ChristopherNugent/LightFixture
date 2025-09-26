@@ -40,7 +40,7 @@ public sealed class DataProvider
         return createdObject;
     }
     
-    internal IEnumerable<T> GetMany<T>(CreationRequest? creationRequest = null, int count = 3)
+    public IEnumerable<T> ResolveMany<T>(CreationRequest? creationRequest = null, int count = 3)
     {
         var request = new CreationRequest(typeof(T), creationRequest?.PropertyName);
         for (var i = 0; i < count; i++)
@@ -54,7 +54,7 @@ public sealed class DataProvider
         }
     }
 
-    internal IEnumerable<object> GetMany(CreationRequest creationRequest, int count = 3)
+    public IEnumerable<object> ResolveMany(CreationRequest creationRequest, int count = 3)
     {
         for (var i = 0; i < count; i++)
         {
