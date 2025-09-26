@@ -155,7 +155,12 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         foreach (var member in symbol.GetMembers())
         {
             token.ThrowIfCancellationRequested();
-            if (member is not IMethodSymbol { Parameters.Length: 0, Name: not ".ctor" } method)
+            if (member is not IMethodSymbol
+                {
+                    Parameters.Length: 0, 
+                    Name: not ".ctor",
+                    IsPartialDefinition: true,
+                } method)
             {
                 continue;
             }
