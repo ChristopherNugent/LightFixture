@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
+using LightFixture.SourceGeneration.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -30,8 +31,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return;
         }
 
-        var rootFactories = GetRootFactories(namedType, context.CancellationToken);
-        var typesToGenerate = WalkTypes(rootFactories.Values);
+        var rootFactories = GetRootFactories(namedType, context.CancellationToken).ToArray();
+        var typesToGenerate = WalkTypes(rootFactories.Select(m => m.ReturnType));
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
@@ -52,11 +53,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             factoryNumber++;
         }
 
-        foreach (var kvp in rootFactories)
+        foreach (var method in rootFactories)
         {
-            var methodName = kvp.Key;
-            var returnType = kvp.Value;
-            code.AppendLine($"public partial {GetFullTypeName(returnType)} {methodName}() => default;");
+            code.AppendLine($"{method.DeclaredAccessibility.ToSyntax()} partial {GetFullTypeName(method.ReturnType)} {method.Name}() => default;");
         }
 
         code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
@@ -149,9 +148,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         _ => type.ToDisplayString(),
     };
 
-    private static Dictionary<string, ITypeSymbol> GetRootFactories(INamedTypeSymbol symbol, CancellationToken token)
+    private static IEnumerable<IMethodSymbol> GetRootFactories(INamedTypeSymbol symbol, CancellationToken token)
     {
-        var dict = new Dictionary<string, ITypeSymbol>();
         foreach (var member in symbol.GetMembers())
         {
             token.ThrowIfCancellationRequested();
@@ -165,10 +163,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 continue;
             }
 
-            dict.Add(method.Name, method.ReturnType);
+            yield return method;
         }
-
-        return dict;
     }
 
     private static IEnumerable<ITypeSymbol> WalkTypes(IEnumerable<ITypeSymbol> symbols)
