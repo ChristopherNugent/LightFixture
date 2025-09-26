@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added built-in support for enum resolution (uses round-robin resolution).
 - Added improved support for numerics
-  - Adds built-in `byte` provider
-  - Adds built-in `short` resolution
+  - Added built-in `byte` provider
+  - Added built-in `short` resolution
 
 ### Changed
 
@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- Only generate factory implementations for partial methods.
+- Match accessibility modifiers on generated methods.
 
 ### Security
 
