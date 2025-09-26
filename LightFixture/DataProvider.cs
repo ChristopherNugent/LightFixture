@@ -2,13 +2,17 @@ namespace LightFixture;
 
 public sealed class DataProvider
 {
-    private readonly Dictionary<Type, object> _factories;
+    private readonly Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> _factories;
+    private readonly IReadOnlyList<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
 
     private readonly HashSet<Type> _typeStack = [];
     
-    internal DataProvider(Dictionary<Type, object> factories)
+    internal DataProvider(
+        Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> factories,
+        IReadOnlyList<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories)
     {
         _factories = factories;
+        _fallbackFactories = fallbackFactories;
     }
 
     public ResolvedData<T> Resolve<T>(CreationRequest? creationRequest = null)
@@ -30,13 +34,7 @@ public sealed class DataProvider
         }
 
         var factory = GetFactory(resolvedType);
-        var createdObject = factory switch
-        {
-            Func<DataProvider, CreationRequest?, ResolvedData<object>> f => f(
-                this,
-                creationRequest),
-            _ => throw new InvalidOperationException($"Unknown factory type: {factory.GetType().FullName}")
-        };
+        var createdObject = factory?.Invoke(this, creationRequest) ?? ResolveFallback(creationRequest);
         
         _typeStack.Remove(resolvedType);
         return createdObject;
@@ -69,7 +67,7 @@ public sealed class DataProvider
         }
     }
 
-    private object GetFactory(Type typeToResolve)
+    private Func<DataProvider, CreationRequest?, ResolvedData<object>>? GetFactory(Type typeToResolve)
     {
         if (_factories.TryGetValue(typeToResolve, out var factory))
         {
@@ -82,11 +80,25 @@ public sealed class DataProvider
             return factory;
         }
 
-        if (_factories.TryGetValue(typeToResolve.GetGenericTypeDefinition(), out factory))
+        if (typeToResolve.IsGenericType && _factories.TryGetValue(typeToResolve.GetGenericTypeDefinition(), out factory))
         {
             return factory;
         }
-        
-        throw new KeyNotFoundException($"Unknown factory type: {typeToResolve.FullName}");
+
+        return null;
+    }
+
+    private ResolvedData<object> ResolveFallback(CreationRequest creationRequest)
+    {
+        foreach (var factory in _fallbackFactories)
+        {
+            var result = factory(this, creationRequest);
+            if (result.IsResolved)
+            {
+                return result.Value;
+            }
+        }
+
+        throw new Exception("No registered factory was available for type.");
     }
 }

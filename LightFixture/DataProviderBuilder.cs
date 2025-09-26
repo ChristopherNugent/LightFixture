@@ -4,7 +4,8 @@ namespace LightFixture;
 
 public sealed class DataProviderBuilder
 {
-    private readonly Dictionary<Type, object> _factories = new();
+    private readonly Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> _factories = new();
+    private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories = new();
 
     public DataProviderBuilder()
     {
@@ -13,6 +14,7 @@ public sealed class DataProviderBuilder
         Customize(GuidProvider.Instance);
         Customize(CollectionProvider.Instance);
         Customize(DictionaryProvider.Instance);
+        Customize(EnumProvider.Instance);
     }
     
     public DataProviderBuilder Register<T>(
@@ -37,6 +39,12 @@ public sealed class DataProviderBuilder
         }
         return this;
     }
+    
+    public DataProviderBuilder Register(Func<DataProvider, CreationRequest, ResolvedData<object>> factory)
+    {
+       _fallbackFactories.Add(factory);
+        return this;
+    }
 
     public DataProviderBuilder Customize(IDataProviderCustomization customization)
     {
@@ -44,5 +52,5 @@ public sealed class DataProviderBuilder
         return this;
     }
 
-    public DataProvider Build() => new(_factories);
+    public DataProvider Build() => new(_factories, _fallbackFactories);
 }

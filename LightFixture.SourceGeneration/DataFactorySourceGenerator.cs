@@ -195,10 +195,15 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
     {
         if (type is INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable)
         {
-            return IsNativeType(nullable.TypeArguments[0]);
+            type = nullable.TypeArguments[0];
         }
 
         if (type.SpecialType is not SpecialType.None)
+        {
+            return true;
+        }
+
+        if (type.TypeKind is TypeKind.Enum)
         {
             return true;
         }
