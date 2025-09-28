@@ -14,7 +14,8 @@ To get started with source generated providers, you can use something like the f
 [DataFactory]
 public partial class SampleDataProvider
 {
-    public partial SampleData SomeData();
+    [DataFactory]
+    private partial SampleData SomeData();
 }
 
 public sealed class SampleData
@@ -54,6 +55,22 @@ public DataProviderBuilder Register(
     Type type,
     Func<DataProvider, CreationRequest?, ResolvedData<object>> factory,
     bool overrideExisting = false)
+```
+
+Postprocessors for more granular customization can be added like so
+
+```csharp
+// specified type
+builder.AddPostProcessor<BasicType>((dataProvider, bt) => bt.Value = 42);
+
+// or less specically
+buider.AddPostProcessor((dataProvider, obj) => 
+{
+    if(obj is BasicType bt) 
+    {
+        bt.Value = 42;
+    }
+});
 ```
 
 Data can be resolved from a `DataProvider` like so
