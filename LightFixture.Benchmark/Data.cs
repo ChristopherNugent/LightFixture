@@ -5,6 +5,7 @@ namespace LightFixture.Benchmark;
 [DataFactory]
 public partial class SampleDataProvider
 {
+    [DataFactory]
     public partial SampleDataOuter SomeData();
 }
 

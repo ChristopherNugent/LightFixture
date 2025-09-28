@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading;
 using LightFixture.SourceGeneration.Extensions;
@@ -55,7 +56,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
         foreach (var method in rootFactories)
         {
-            code.AppendLine($"{method.DeclaredAccessibility.ToSyntax()} partial {GetFullTypeName(method.ReturnType)} {method.Name}() => default;");
+            code
+                .AppendLine("[global::System.Obsolete(\"This method is only used as a target for source generator customization. It should not be invoked.\", error: true)]")
+                .AppendLine($"{method.DeclaredAccessibility.ToSyntax()} partial {GetFullTypeName(method.ReturnType)} {method.Name}() => throw new global::System.NotImplementedException();");
         }
 
         code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
@@ -163,7 +166,25 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 continue;
             }
 
+            if (!HasMarkerAttribute(method))
+            {
+                continue;
+            }
+
             yield return method;
+        }
+
+        static bool HasMarkerAttribute(IMethodSymbol method)
+        {
+            foreach (var attributeData in method.GetAttributes())
+            {
+                if (attributeData.AttributeClass?.ToDisplayString() is "LightFixture.DataFactoryAttribute")
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

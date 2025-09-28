@@ -5,7 +5,8 @@ namespace LightFixture.SourceGeneration.Sample;
 [DataFactory]
 public partial class SampleDataProvider
 {
-    public partial SampleData SomeData();
+    [DataFactory]
+    private partial SampleData SomeData();
 }
 
 public sealed class SampleData

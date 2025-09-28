@@ -25,6 +25,7 @@ public sealed partial class BasicTypeResolutionTest
                         d2 => d2.Recursion.ShouldBeNull()));
     }
 
+    [DataFactory]
     private partial TestType MakeData();
     
     public sealed class TestType

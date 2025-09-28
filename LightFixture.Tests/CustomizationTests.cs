@@ -18,6 +18,7 @@ public sealed partial class CustomizationTests
         provider.ResolveMany<BasicType>(count: 10).ShouldAllBe(x => x.Value == testValue);
     }
 
+    [DataFactory]
     private partial BasicType GetData();
 
     private sealed class BasicType
