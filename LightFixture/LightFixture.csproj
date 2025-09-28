@@ -9,6 +9,7 @@
         <Authors>cnugent</Authors>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/ChristopherNugent/LightFixture</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
