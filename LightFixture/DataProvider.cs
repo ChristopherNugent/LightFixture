@@ -3,16 +3,19 @@ namespace LightFixture;
 public sealed class DataProvider
 {
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> _factories;
-    private readonly IReadOnlyList<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
+    private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
+    private readonly List<Action<DataProvider, object>> _postProcessors;
 
     private readonly HashSet<Type> _typeStack = [];
     
     internal DataProvider(
         Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> factories,
-        IReadOnlyList<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories)
+        List<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories,
+        List<Action<DataProvider, object>> postProcessors)
     {
         _factories = factories;
         _fallbackFactories = fallbackFactories;
+        _postProcessors = postProcessors;
     }
 
     public ResolvedData<T> Resolve<T>(CreationRequest? creationRequest = null)
@@ -35,6 +38,13 @@ public sealed class DataProvider
 
         var factory = GetFactory(resolvedType);
         var createdObject = factory?.Invoke(this, creationRequest) ?? ResolveFallback(creationRequest);
+        if (createdObject.IsResolved)
+        {
+            foreach (var postProcessor in _postProcessors)
+            {
+                postProcessor(this, createdObject.Value);
+            }
+        }
         
         _typeStack.Remove(resolvedType);
         return createdObject;
