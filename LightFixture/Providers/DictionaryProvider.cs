@@ -6,9 +6,9 @@ internal sealed class DictionaryProvider : IDataProviderCustomization
 {
     private static readonly ConcurrentDictionary<(Type, Type), IDictionaryProvider> Providers = new ();
 
-    private ResolvedData<object> MakeDictionary(DataProvider provider, CreationRequest? request)
+    private ResolvedData<object> MakeDictionary(DataProvider provider, CreationRequest request)
     {
-        if (request?.RequestedType?.GenericTypeArguments is not [var keyType, var valueType])
+        if (request.RequestedType?.GenericTypeArguments is not [var keyType, var valueType])
         {
             return ResolvedData<object>.NoData;
         }
@@ -21,7 +21,7 @@ internal sealed class DictionaryProvider : IDataProviderCustomization
             Providers.TryAdd((keyType, valueType), seriesProvider);
         }
         
-        return seriesProvider.Get(provider, request.Value);
+        return seriesProvider.Get(provider, request);
     }
     
     public void Apply(DataProviderBuilder builder)

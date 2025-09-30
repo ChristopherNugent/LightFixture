@@ -4,7 +4,7 @@ namespace LightFixture;
 
 public sealed class DataProviderBuilder
 {
-    private readonly Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> _factories = new();
+    private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories = new();
     private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories = new();
     private readonly List<Action<DataProvider, object>> _postProcessors = new();
 
@@ -19,7 +19,7 @@ public sealed class DataProviderBuilder
     }
 
     public DataProviderBuilder Register<T>(
-        Func<DataProvider, CreationRequest?, ResolvedData<T>> factory,
+        Func<DataProvider, CreationRequest, ResolvedData<T>> factory,
         bool overrideExisting = false)
     {
         var type = typeof(T);
@@ -31,7 +31,7 @@ public sealed class DataProviderBuilder
 
     public DataProviderBuilder Register(
         Type type,
-        Func<DataProvider, CreationRequest?, ResolvedData<object>> factory,
+        Func<DataProvider, CreationRequest, ResolvedData<object>> factory,
         bool overrideExisting = false)
     {
         if (overrideExisting || !_factories.ContainsKey(type))

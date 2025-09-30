@@ -2,14 +2,14 @@ namespace LightFixture;
 
 public sealed class DataProvider
 {
-    private readonly Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> _factories;
+    private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories;
     private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
     private readonly List<Action<DataProvider, object>> _postProcessors;
 
     private readonly HashSet<Type> _typeStack = [];
     
     internal DataProvider(
-        Dictionary<Type, Func<DataProvider, CreationRequest?, ResolvedData<object>>> factories,
+        Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> factories,
         List<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories,
         List<Action<DataProvider, object>> postProcessors)
     {
@@ -77,7 +77,7 @@ public sealed class DataProvider
         }
     }
 
-    private Func<DataProvider, CreationRequest?, ResolvedData<object>>? GetFactory(Type typeToResolve)
+    private Func<DataProvider, CreationRequest, ResolvedData<object>>? GetFactory(Type typeToResolve)
     {
         if (_factories.TryGetValue(typeToResolve, out var factory))
         {
