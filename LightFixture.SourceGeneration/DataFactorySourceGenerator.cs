@@ -42,7 +42,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             .AppendLine()
             .AppendLine($"namespace {namedType.ContainingNamespace.ToDisplayString()};")
             .AppendLine()
-            .AppendLine($"partial class {namedType.Name} : global::LightFixture.IDataProviderCustomization")
+            .AppendLine($"partial class {namedType.Name} : global::{WellKnownTypes.DataProviderCustomization}")
             .OpenBlock();
 
         var factoryNumber = 0;
@@ -54,7 +54,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         }
 
         code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
-            .AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
+            .AppendLine($"void global::{WellKnownTypes.DataProviderCustomization}.Apply(global::LightFixture.DataProviderBuilder builder)")
             .OpenBlock();
         foreach (var kvp in factoryLookup)
         {
