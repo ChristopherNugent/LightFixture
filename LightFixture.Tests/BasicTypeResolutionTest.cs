@@ -2,7 +2,7 @@ using Shouldly;
 
 namespace LightFixture.Tests;
 
-[DataFactory]
+[DataFactory(typeof(TestType))]
 public sealed partial class BasicTypeResolutionTest
 {
     [Fact]
@@ -25,17 +25,14 @@ public sealed partial class BasicTypeResolutionTest
                         d2 => d2.Recursion.ShouldBeNull()));
     }
 
-    [DataFactory]
-    private partial TestType MakeData();
-    
-    public sealed class TestType
+    private sealed class TestType
     {
         public InnerType? Inner { get; set; }
         
         public double SomeDouble { get; set; }
     }
 
-    public sealed class InnerType
+    private sealed class InnerType
     {
         public string? SomeString { get; set; }
         

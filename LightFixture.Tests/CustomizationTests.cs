@@ -2,7 +2,7 @@ using Shouldly;
 
 namespace LightFixture.Tests;
 
-[DataFactory]
+[DataFactory(typeof(BasicType))]
 public sealed partial class CustomizationTests
 {
     [Fact]
@@ -17,9 +17,6 @@ public sealed partial class CustomizationTests
         
         provider.ResolveMany<BasicType>(count: 10).ShouldAllBe(x => x.Value == testValue);
     }
-
-    [DataFactory]
-    private partial BasicType GetData();
 
     private sealed class BasicType
     {
