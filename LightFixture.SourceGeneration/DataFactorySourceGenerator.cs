@@ -14,7 +14,6 @@ namespace LightFixture.SourceGeneration;
 [Generator]
 public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 {
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var targetSymbols = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -32,8 +31,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return;
         }
 
-        var rootFactories = GetFactoryDefinition(namedType, context.CancellationToken);
-        var typesToGenerate = WalkTypes(rootFactories.RootTypes);
+        var factoryDefinition = GetFactoryDefinition(namedType, context.CancellationToken);
+        var typesToGenerate = WalkTypes(factoryDefinition.RootTypes);
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
@@ -68,6 +67,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
         void WriteAnonymousFactory(ITypeSymbol type)
         {
+            factoryDefinition.IgnoredProperties.TryGetValue(type, out var ignoredProperties);
             factoryLookup[type] = factoryNumber;
 
             var constructor = type is INamedTypeSymbol nt
@@ -106,7 +106,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             foreach (var member in type.GetMembers())
             {
                 if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
-                    || constructorParameterNames.Contains(property.Name))
+                    || constructorParameterNames.Contains(property.Name)
+                    || ignoredProperties?.Contains(property.Name) is true)
                 {
                     continue;
                 }
@@ -155,6 +156,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 case WellKnownTypes.DataFactoryAttribute:
                     HandleDataFactoryAttribute(definition, attribute);
                     break;
+                case WellKnownTypes.DataFactoryIgnorePropertyAttribute:
+                    HandleIgnorePropertyAttribute(definition, attribute);
+                    break;
             }
         }
 
@@ -166,6 +170,21 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 && data.ConstructorArguments[0].Value is ITypeSymbol type)
             {
                 definition.RootTypes.Add(type);
+            }
+        }
+
+        static void HandleIgnorePropertyAttribute(DataFactoryDefinition definition, AttributeData data)
+        {
+            if (data.ConstructorArguments.Length is 2
+                && data.ConstructorArguments[0].Value is ITypeSymbol type
+                && data.ConstructorArguments[1].Value is string property)
+            {
+                if (!definition.IgnoredProperties.TryGetValue(type, out var ignored))
+                {
+                    ignored = new();
+                    definition.IgnoredProperties[type] = ignored;
+                }
+                ignored.Add(property);
             }
         }
     }
@@ -222,6 +241,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
     private sealed class DataFactoryDefinition
     {
-        public HashSet<ITypeSymbol> RootTypes { get; } =  new(SymbolEqualityComparer.Default);
+        public HashSet<ITypeSymbol> RootTypes { get; } = new(SymbolEqualityComparer.Default);
+
+        public Dictionary<ITypeSymbol, HashSet<string>> IgnoredProperties { get; } = new(SymbolEqualityComparer.Default);
     }
 }
