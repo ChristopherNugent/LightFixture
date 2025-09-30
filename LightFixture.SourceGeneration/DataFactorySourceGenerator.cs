@@ -53,7 +53,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             factoryNumber++;
         }
 
-        code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
+        code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
+            .AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
             .OpenBlock();
         foreach (var kvp in factoryLookup)
         {
@@ -83,8 +84,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 constructorParameters.Select(x => x.Name),
                 StringComparer.InvariantCultureIgnoreCase);
 
-            code.AppendLine(
-                    $"private {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
+            code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
+                .AppendLine($"private {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
                 .OpenBlock()
                 .Append($"var o = new {GetFullTypeName(type)}(");
 
