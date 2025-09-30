@@ -11,15 +11,18 @@ public sealed partial class IgnoredPropertyTests
             .Customize(this)
             .Build();
 
-        var data = provider.Resolve<TestType>();
+        provider.Resolve<TestType>();
     }
 
     private sealed class TestType
     {
-        public int IgnoredProperty
+        public TestType2 IgnoredProperty
         {
-            get => -1;
+            get => new();
+            [Obsolete("Break the source gen if referenced", true)]
             set => Assert.Fail("This setter should never be accessed.");
         }
     }
+
+    private sealed class TestType2;
 }

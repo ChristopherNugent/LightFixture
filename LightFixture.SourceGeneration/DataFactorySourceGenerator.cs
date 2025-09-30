@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading;
 using LightFixture.SourceGeneration.Constants;
-using LightFixture.SourceGeneration.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -32,7 +30,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         }
 
         var factoryDefinition = GetFactoryDefinition(namedType, context.CancellationToken);
-        var typesToGenerate = WalkTypes(factoryDefinition.RootTypes);
+        var typesToGenerate = WalkTypes(factoryDefinition);
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
@@ -59,7 +57,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             .OpenBlock();
         foreach (var kvp in factoryLookup)
         {
-            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>(static (p, _) => _Factory{kvp.Value}(p));");
+            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>((p, _) => _Factory{kvp.Value}(p));");
         }
 
         code.CloseBlock();
@@ -86,7 +84,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 StringComparer.InvariantCultureIgnoreCase);
 
             code.AppendLine(
-                    $"private static {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
+                    $"private {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
                 .OpenBlock()
                 .Append($"var o = new {GetFullTypeName(type)}(");
 
@@ -193,19 +191,19 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         }
     }
 
-    private static IEnumerable<ITypeSymbol> WalkTypes(IEnumerable<ITypeSymbol> symbols)
+    private static IEnumerable<ITypeSymbol> WalkTypes(DataFactoryDefinition definition)
     {
         var explored = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
-        var queue = new Queue<ITypeSymbol>(symbols);
+        var queue = new Queue<ITypeSymbol>(definition.RootTypes);
 
         while (queue.Count > 0)
         {
-            var item = queue.Dequeue();
-            yield return item;
-            var members = item.GetMembers();
-            foreach (var member in members)
+            var type = queue.Dequeue();
+            yield return type;
+            foreach (var member in type.GetMembers())
             {
-                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property)
+                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
+                    || IsIgnored(type, property.Name))
                 {
                     continue;
                 }
@@ -215,6 +213,14 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                     queue.Enqueue(property.Type);
                 }
             }
+        }
+        
+        yield break;
+
+        bool IsIgnored(ITypeSymbol containingType, string propertyName)
+        {
+            return definition.IgnoredProperties.TryGetValue(containingType, out var ignored)
+                && ignored.Contains(propertyName);
         }
     }
 
