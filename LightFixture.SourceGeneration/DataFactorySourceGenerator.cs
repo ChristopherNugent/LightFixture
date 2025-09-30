@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Threading;
+using LightFixture.SourceGeneration.Constants;
 using LightFixture.SourceGeneration.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -13,12 +14,11 @@ namespace LightFixture.SourceGeneration;
 [Generator]
 public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 {
-    private const string AttributeFqn = "LightFixture.DataFactoryAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var targetSymbols = context.SyntaxProvider.ForAttributeWithMetadataName(
-            AttributeFqn,
+            WellKnownTypes.DataFactoryAttribute,
             (node, _) => node is ClassDeclarationSyntax,
             (ctx, _) => ctx.TargetSymbol);
 
@@ -32,8 +32,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return;
         }
 
-        var rootFactories = GetRootFactories(namedType, context.CancellationToken).ToArray();
-        var typesToGenerate = WalkTypes(rootFactories.Select(m => m.ReturnType));
+        var rootFactories = GetFactoryDefinition(namedType, context.CancellationToken);
+        var typesToGenerate = WalkTypes(rootFactories.RootTypes);
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
@@ -52,13 +52,6 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             context.CancellationToken.ThrowIfCancellationRequested();
             WriteAnonymousFactory(type);
             factoryNumber++;
-        }
-
-        foreach (var method in rootFactories)
-        {
-            code
-                .AppendLine("[global::System.Obsolete(\"This method is only used as a target for source generator customization. It should not be invoked.\", error: true)]")
-                .AppendLine($"{method.DeclaredAccessibility.ToSyntax()} partial {GetFullTypeName(method.ReturnType)} {method.Name}() => throw new global::System.NotImplementedException();");
         }
 
         code.AppendLine("public void Apply(global::LightFixture.DataProviderBuilder builder)")
@@ -151,40 +144,29 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         _ => type.ToDisplayString(),
     };
 
-    private static IEnumerable<IMethodSymbol> GetRootFactories(INamedTypeSymbol symbol, CancellationToken token)
+    private static DataFactoryDefinition GetFactoryDefinition(INamedTypeSymbol symbol, CancellationToken token)
     {
-        foreach (var member in symbol.GetMembers())
+        var definition = new DataFactoryDefinition();
+        foreach (var attribute in symbol.GetAttributes())
         {
             token.ThrowIfCancellationRequested();
-            if (member is not IMethodSymbol
-                {
-                    Parameters.Length: 0, 
-                    Name: not ".ctor",
-                    IsPartialDefinition: true,
-                } method)
+            switch (attribute.AttributeClass?.ToDisplayString())
             {
-                continue;
+                case WellKnownTypes.DataFactoryAttribute:
+                    HandleDataFactoryAttribute(definition, attribute);
+                    break;
             }
-
-            if (!HasMarkerAttribute(method))
-            {
-                continue;
-            }
-
-            yield return method;
         }
 
-        static bool HasMarkerAttribute(IMethodSymbol method)
-        {
-            foreach (var attributeData in method.GetAttributes())
-            {
-                if (attributeData.AttributeClass?.ToDisplayString() is "LightFixture.DataFactoryAttribute")
-                {
-                    return true;
-                }
-            }
+        return definition;
 
-            return false;
+        static void HandleDataFactoryAttribute(DataFactoryDefinition definition, AttributeData data)
+        {
+            if (data.ConstructorArguments.Length is 1
+                && data.ConstructorArguments[0].Value is ITypeSymbol type)
+            {
+                definition.RootTypes.Add(type);
+            }
         }
     }
 
@@ -236,5 +218,10 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         }
 
         return false;
+    }
+
+    private sealed class DataFactoryDefinition
+    {
+        public HashSet<ITypeSymbol> RootTypes { get; } =  new(SymbolEqualityComparer.Default);
     }
 }

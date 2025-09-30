@@ -1,4 +1,4 @@
 namespace LightFixture;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
-public sealed class DataFactoryAttribute : Attribute;
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public sealed class DataFactoryAttribute(Type type) : Attribute;

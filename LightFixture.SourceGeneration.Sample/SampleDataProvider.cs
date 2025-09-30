@@ -2,11 +2,9 @@ using System.Collections.Generic;
 
 namespace LightFixture.SourceGeneration.Sample;
 
-[DataFactory]
+[DataFactory(typeof(SampleData))]
 public partial class SampleDataProvider
 {
-    [DataFactory]
-    private partial SampleData SomeData();
 }
 
 public sealed class SampleData

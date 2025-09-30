@@ -2,11 +2,9 @@ using System.Collections.Generic;
 
 namespace LightFixture.Benchmark;
 
-[DataFactory]
+[DataFactory(typeof(SampleDataOuter))]
 public partial class SampleDataProvider
 {
-    [DataFactory]
-    public partial SampleDataOuter SomeData();
 }
 
 public class SampleDataOuter
