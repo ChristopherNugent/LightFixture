@@ -11,9 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added "post processor" methods for more granular customizations
 
 ### Changed
-- Source generator customization methods are now marked `[Obsolete]`, as they aren't meant to be invoked and instead
-  are only used to configure the source generator.
-- The source generator customization methods now also require the `[DataFactory]` attribute.
+- `DataFactoryAttribute` now requires the target type to be specified e.g. `[DataFactory(typeof(MyData))]`
 
 ### Deprecated
 
