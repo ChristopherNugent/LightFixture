@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added "post processor" methods for more granular customizations
 - Added `DataFactoryIgnorePropertyAttribute` for ignoring properties in source generated factories.
+- Added built-in providers for common collection interfaces.
 
 ### Changed
 - `DataFactoryAttribute` now requires the target type to be specified e.g. `[DataFactory(typeof(MyData))]`

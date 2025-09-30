@@ -109,6 +109,6 @@ public sealed class DataProvider
             }
         }
 
-        throw new Exception("No registered factory was available for type.");
+        throw new Exception($"No registered factory was available for type {creationRequest.RequestedType?.ToString() ?? "(no type)"}.");
     }
 }

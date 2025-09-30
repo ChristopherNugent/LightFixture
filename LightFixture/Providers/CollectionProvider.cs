@@ -5,7 +5,7 @@ namespace LightFixture.Providers;
 
 internal sealed class CollectionProvider : IDataProviderCustomization
 {
-    public static readonly CollectionProvider Instance = new CollectionProvider();
+    public static readonly CollectionProvider Instance = new();
     
     private readonly ConcurrentDictionary<Type, IEnumerableProvider> _providers = new ();
 
@@ -13,9 +13,9 @@ internal sealed class CollectionProvider : IDataProviderCustomization
     {
     }
 
-    private ResolvedData<object> MakeEnumerableAcceptor(DataProvider provider, CreationRequest? creationRequest = null)
+    private ResolvedData<object> MakeEnumerableAcceptor(DataProvider provider, CreationRequest creationRequest)
     {
-        if (creationRequest?.RequestedType?.GenericTypeArguments is not [var elementType])
+        if (creationRequest.RequestedType?.GenericTypeArguments is not [var elementType])
         {
             return ResolvedData<object>.NoData;
         }
@@ -29,14 +29,44 @@ internal sealed class CollectionProvider : IDataProviderCustomization
         }
         
         return Activator.CreateInstance(
-            creationRequest.Value.RequestedType,
-            seriesProvider.Get(provider, creationRequest.Value))!;
+            creationRequest.RequestedType,
+            seriesProvider.Get(provider, creationRequest))!;
     }
     
     public void Apply(DataProviderBuilder builder)
     {
         builder.Register(typeof(List<>), MakeEnumerableAcceptor);
+        builder.Register(typeof(IList<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(List<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+        builder.Register(typeof(IReadOnlyList<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(List<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+        builder.Register(typeof(IEnumerable<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(List<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+        builder.Register(typeof(ICollection<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(List<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+        builder.Register(typeof(IReadOnlyCollection<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(List<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+            
         builder.Register(typeof(HashSet<>), MakeEnumerableAcceptor);
+        builder.Register(typeof(ISet<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(HashSet<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+        builder.Register(typeof(IReadOnlySet<>), (p, r) => MakeEnumerableAcceptor(p, r with
+        {
+            RequestedType = typeof(HashSet<>).MakeGenericType(r.RequestedType!.GenericTypeArguments[0])
+        }));
+        
         builder.Register(typeof(Queue<>), MakeEnumerableAcceptor);
         builder.Register(typeof(Stack<>), MakeEnumerableAcceptor);
     }
