@@ -11,12 +11,8 @@ anonymous data.
 To get started with source generated providers, you can use something like the following
 
 ```csharp
-[DataFactory]
-public partial class SampleDataProvider
-{
-    [DataFactory]
-    private partial SampleData SomeData();
-}
+[DataFactory(typeof(SampleData)]
+public partial class SampleDataProvider;
 
 public sealed class SampleData
 {
@@ -24,6 +20,19 @@ public sealed class SampleData
     
     public double? Double { get; set; }
 }
+```
+
+Marking generates a data provider customization automatically generates all needed factories for the type trees
+specified. Multiple attributes can be specified together .
+
+Data can be resolved from a `DataProvider` like so
+
+```csharp
+var dataProvider = new DataProviderBuilder()
+    .Customize(new SampleDataProvider())
+    .Build();
+
+var data = dataProvider.Resolve<SampleData>().Value;
 ```
 
 To provide your own customizations, you can write something like
@@ -57,7 +66,7 @@ public DataProviderBuilder Register(
     bool overrideExisting = false)
 ```
 
-Postprocessors for more granular customization can be added like so
+Postprocessors for more granular customization can be added like so.
 
 ```csharp
 // specified type
@@ -73,12 +82,17 @@ buider.AddPostProcessor((dataProvider, obj) =>
 });
 ```
 
-Data can be resolved from a `DataProvider` like so
+Properties can be ignored during source generation like so.
 
 ```csharp
-var dataProvider = new DataProviderBuilder()
-    .Customize(new SampleDataProvider())
-    .Build();
+[DataFactory(typeof(SampleData)]
+[DataFactoryIgnoreProperty(typeof(SampleData), nameof(SampleData.Double))]
+public partial class SampleDataProvider;
 
-var data = dataProvider.Resolve<SampleData>().Value;
+public sealed class SampleData
+{
+    public int Int { get; set; }
+    
+    public double? Double { get; set; }
+}
 ```
