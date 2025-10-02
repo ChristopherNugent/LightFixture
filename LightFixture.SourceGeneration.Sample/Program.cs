@@ -3,9 +3,9 @@ using LightFixture;
 using LightFixture.SourceGeneration.Sample;
 
 var dataProvider = new DataProviderBuilder()
-    // .Customize(new SampleDataProvider())
+    .Customize(new SampleDataProvider())
     .Build();
 
-var data = dataProvider.Resolve<SampleData>().Value;
+var data = dataProvider.Resolve<Inherited>().Value;
 
 Console.WriteLine();

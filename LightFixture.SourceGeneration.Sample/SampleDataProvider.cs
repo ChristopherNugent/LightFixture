@@ -1,26 +1,21 @@
+using System;
 using System.Collections.Generic;
 
 namespace LightFixture.SourceGeneration.Sample;
 
-[DataFactory(typeof(SampleData))]
+[DataFactory(typeof(Inherited))]
 public partial class SampleDataProvider
 {
 }
 
-public sealed class SampleData
+public class Base
 {
-    public int Int { get; set; }
+    public int A { get; set; }
     
-    public double? Double { get; set; }
-    
-    public SampleEnum Enum { get; set; }
-    
-    public SampleEnum Enum2 { get; set; }
+    public int B { get => default; set => throw new Exception("This should never be set"); }
 }
 
-public enum SampleEnum
+public sealed class Inherited : Base
 {
-    ValueA,
-    ValueB,
-    ValueC,
+    public new int B { get; set; }
 }
