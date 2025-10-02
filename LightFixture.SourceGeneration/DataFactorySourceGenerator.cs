@@ -114,14 +114,8 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             
             foreach (var property in propertiesToSet)
             {
-                code.AppendLine($"var o{count} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
-                    .Indent()
-                    .AppendLine("new global::LightFixture.CreationRequest(")
-                    .Indent()
-                    .AppendLine($"typeof({GetFullTypeName(property.Type)}),")
-                    .AppendLine($"\"{property.Name}\"));")
-                    .Outdent()
-                    .Outdent()
+                code.Append($"var o{count} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
+                    .AppendLine($"new (typeof({GetFullTypeName(property.Type)}),\"{property.Name}\"));")
                     .AppendLine($"if(o{count}.IsResolved)")
                     .OpenBlock()
                     .AppendLine($"o.{property.Name} = o{count}.Value;")
