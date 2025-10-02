@@ -106,15 +106,13 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             code.AppendLine(");");
 
             var count = 0;
-            foreach (var member in type.GetMembers())
+            var propertiesToSet = GetPropertiesToSet(
+                factoryDefinition, 
+                constructorParameterNames,
+                type);
+            
+            foreach (var property in propertiesToSet)
             {
-                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
-                    || constructorParameterNames.Contains(property.Name)
-                    || ignoredProperties?.Contains(property.Name) is true)
-                {
-                    continue;
-                }
-
                 code.AppendLine($"var o{count} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
                     .Indent()
                     .AppendLine("new global::LightFixture.CreationRequest(")
@@ -134,6 +132,34 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             code.AppendLine("return o;")
                 .CloseBlock()
                 .AppendLine();
+        }
+    }
+
+    private static IEnumerable<IPropertySymbol> GetPropertiesToSet(
+        DataFactoryDefinition definition,
+        HashSet<string> constructorParameterNames,
+        ITypeSymbol type)
+    {
+        var currentType = type;
+        // Track already used members to handle hiding.
+        var alreadyUsedMembers = new HashSet<string>();
+        while (currentType is not null)
+        {
+            definition.IgnoredProperties.TryGetValue(currentType, out var ignoredProperties);
+            alreadyUsedMembers.UnionWith(ignoredProperties ?? []);
+            foreach (var member in currentType.GetMembers())
+            {
+                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
+                    || constructorParameterNames.Contains(property.Name)
+                    || !alreadyUsedMembers.Add(property.Name))
+                {
+                    continue;
+                }
+
+                yield return property;
+            }
+            
+            currentType = currentType.BaseType;
         }
     }
 
