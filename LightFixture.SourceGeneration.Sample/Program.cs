@@ -6,6 +6,6 @@ var dataProvider = new DataProviderBuilder()
     .Customize(new SampleDataProvider())
     .Build();
 
-var data = dataProvider.Resolve<Inherited>().Value;
+var data = dataProvider.Resolve<T1>().Value;
 
 Console.WriteLine();

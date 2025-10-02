@@ -1,23 +1,16 @@
-using System;
-using System.Collections.Generic;
-
 namespace LightFixture.SourceGeneration.Sample;
 
-[DataFactory(typeof(Inherited))]
+[DataFactory(typeof(T1))]
 public partial class SampleDataProvider
 {
 }
 
-public class Base
+public sealed class T1
 {
-    public int A { get; set; }
-    
-    public int B { get => default; set => throw new Exception("This should never be set"); }
+    public T2[] Array { get; set; } = [];
 }
 
-public sealed class Inherited : Base
+public sealed class T2
 {
-    public new int B { get; set; }
-
-    public int[] Array { get; set; } = [];
+    public int Value { get; set; }
 }

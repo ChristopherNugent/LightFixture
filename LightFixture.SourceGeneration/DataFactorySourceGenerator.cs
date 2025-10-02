@@ -221,9 +221,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
     private static IEnumerable<ITypeSymbol> WalkTypes(DataFactoryDefinition definition)
     {
-        var explored = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+        var explored = new HashSet<ITypeSymbol>(definition.RootTypes, SymbolEqualityComparer.Default);
         var queue = new Queue<ITypeSymbol>(definition.RootTypes);
-
+        
         while (queue.Count > 0)
         {
             var type = queue.Dequeue();
@@ -235,16 +235,32 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
                 {
                     continue;
                 }
-
-                if (!IsNativeType(property.Type) && explored.Add(property.Type))
+                var relevantType = UnwrapType(property.Type);
+                
+                if (!IsNativeType(relevantType) && explored.Add(relevantType))
                 {
-                    queue.Enqueue(property.Type);
+                    queue.Enqueue(relevantType);
                 }
             }
         }
         
         yield break;
 
+        static ITypeSymbol UnwrapType(ITypeSymbol type)
+        {
+            if (type is INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable)
+            {
+                return UnwrapType(nullable.TypeArguments[0]);
+            }
+
+            if (type is IArrayTypeSymbol array)
+            {
+                return array.ElementType;
+            }
+            
+            return type;
+        }
+        
         bool IsIgnored(ITypeSymbol containingType, string propertyName)
         {
             return definition.IgnoredProperties.TryGetValue(containingType, out var ignored)
@@ -259,9 +275,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             type = nullable.TypeArguments[0];
         }
 
-        if (type is IArrayTypeSymbol { ElementType: {} elementType})
+        if (type is IArrayTypeSymbol)
         {
-            type = elementType;
+            return true;
         }
 
         if (type.SpecialType is not SpecialType.None)
