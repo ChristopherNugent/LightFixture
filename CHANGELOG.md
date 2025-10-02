@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `DataFactoryIgnorePropertyAttribute` for ignoring properties in source generated factories.
 - Added built-in providers for common collection interfaces.
 - (Non-hidden) properties from base types are now included.
+- `DataProviderBuilder.Build` now allows configuring behavior when no factory can be resolved for an object.
 
 ### Changed
 - `DataFactoryAttribute` now requires the target type to be specified e.g. `[DataFactory(typeof(MyData))]`

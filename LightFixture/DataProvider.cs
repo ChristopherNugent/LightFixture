@@ -5,17 +5,20 @@ public sealed class DataProvider
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories;
     private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
     private readonly List<Action<DataProvider, object>> _postProcessors;
+    private readonly bool _errorIfNoFactory;
 
     private readonly HashSet<Type> _typeStack = [];
     
     internal DataProvider(
         Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> factories,
         List<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories,
-        List<Action<DataProvider, object>> postProcessors)
+        List<Action<DataProvider, object>> postProcessors,
+        bool errorIfNoFactory)
     {
         _factories = factories;
         _fallbackFactories = fallbackFactories;
         _postProcessors = postProcessors;
+        _errorIfNoFactory = errorIfNoFactory;
     }
 
     public ResolvedData<T> Resolve<T>(CreationRequest? creationRequest = null)
@@ -109,6 +112,8 @@ public sealed class DataProvider
             }
         }
 
-        throw new Exception($"No registered factory was available for type {creationRequest.RequestedType?.ToString() ?? "(no type)"}.");
+        return _errorIfNoFactory
+            ? throw new InvalidOperationException($"No registered factory was available for type {creationRequest.RequestedType?.ToString() ?? "(no type)"}.")
+            : ResolvedData<object>.NoData;
     }
 }

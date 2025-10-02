@@ -69,5 +69,5 @@ public sealed class DataProviderBuilder
         return this;
     }
 
-    public DataProvider Build() => new(_factories, _fallbackFactories,  _postProcessors);
+    public DataProvider Build(bool errorIfNoFactory = false) => new(_factories, _fallbackFactories,  _postProcessors, errorIfNoFactory);
 }
