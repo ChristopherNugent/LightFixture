@@ -165,8 +165,9 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
     private static string GetFullTypeName(ITypeSymbol type) => type switch
     {
-        INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable => GetFullTypeName(
-            nullable.TypeArguments[0]),
+        INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable 
+            => GetFullTypeName(nullable.TypeArguments[0]),
+        IArrayTypeSymbol { ElementType: var elementType } => $"{GetFullTypeName(elementType)}[]",
         { SpecialType: SpecialType.None, IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
             => $"global::{type.ToDisplayString()}".Replace("?", string.Empty),
         { SpecialType: SpecialType.None } => $"global::{type.ToDisplayString()}",
@@ -258,6 +259,11 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             type = nullable.TypeArguments[0];
         }
 
+        if (type is IArrayTypeSymbol { ElementType: {} elementType})
+        {
+            type = elementType;
+        }
+
         if (type.SpecialType is not SpecialType.None)
         {
             return true;
@@ -268,7 +274,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return true;
         }
 
-        if (type.ContainingNamespace.ToDisplayString() is "System.Collections.Generic")
+        if (type.ContainingNamespace?.ToDisplayString() is "System.Collections.Generic")
         {
             return true;
         }

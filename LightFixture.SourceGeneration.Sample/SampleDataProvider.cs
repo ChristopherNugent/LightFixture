@@ -18,4 +18,6 @@ public class Base
 public sealed class Inherited : Base
 {
     public new int B { get; set; }
+
+    public int[] Array { get; set; } = [];
 }

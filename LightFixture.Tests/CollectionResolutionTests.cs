@@ -23,7 +23,8 @@ public sealed partial class CollectionResolutionTests
             c => c.ISet.ShouldNotBeEmpty(),
             c => c.IReadOnlySet.ShouldNotBeEmpty(),
             c => c.Stack.ShouldNotBeEmpty(),
-            c => c.Queue.ShouldNotBeEmpty());
+            c => c.Queue.ShouldNotBeEmpty(),
+            c => c.Array.ShouldNotBeEmpty());
     }
     
     private sealed class Collections
@@ -49,5 +50,7 @@ public sealed partial class CollectionResolutionTests
         public Stack<int>?  Stack { get; set; }
         
         public Queue<int>?  Queue { get; set; }
+
+        public int[]? Array { get; set; }
     }
 }
