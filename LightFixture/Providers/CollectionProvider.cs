@@ -32,6 +32,29 @@ internal sealed class CollectionProvider : IDataProviderCustomization
             creationRequest.RequestedType,
             seriesProvider.Get(provider, creationRequest))!;
     }
+
+    private ResolvedData<object> MakeArray(DataProvider provider, CreationRequest creationRequest)
+    {
+        if (creationRequest.RequestedType?.IsArray is not true
+            || creationRequest.RequestedType.GetElementType() is not {} elementType)
+        {
+            return ResolvedData<object>.NoData;
+        }
+        
+        if(!_providers.TryGetValue(elementType, out var seriesProvider))
+        {
+            seriesProvider = (IEnumerableProvider)Activator.CreateInstance(
+                typeof(TypedEnumerableProvider<>).MakeGenericType(elementType))!;
+            
+            _providers.TryAdd(elementType, seriesProvider);
+        }
+
+        var enumerable = seriesProvider.Get(provider, creationRequest);
+        var list = enumerable.Cast<object>().ToArray();
+        var array = Array.CreateInstance(elementType, list.Length);
+        list.CopyTo(array, 0);
+        return array;
+    }
     
     public void Apply(DataProviderBuilder builder)
     {
@@ -69,17 +92,18 @@ internal sealed class CollectionProvider : IDataProviderCustomization
         
         builder.Register(typeof(Queue<>), MakeEnumerableAcceptor);
         builder.Register(typeof(Stack<>), MakeEnumerableAcceptor);
+        builder.Register(MakeArray);
     }
 
     private sealed class TypedEnumerableProvider<T> : IEnumerableProvider
     {
         private IEnumerable<T> GetItems(DataProvider provider, CreationRequest request) => provider.ResolveMany<T>(request);
 
-        public object Get(DataProvider provider, CreationRequest request) => GetItems(provider, request);
+        public IEnumerable Get(DataProvider provider, CreationRequest request) => GetItems(provider, request);
     }
 
     private interface IEnumerableProvider
     {
-        object Get(DataProvider provider, CreationRequest request);
+        IEnumerable Get(DataProvider provider, CreationRequest request);
     }
 }
