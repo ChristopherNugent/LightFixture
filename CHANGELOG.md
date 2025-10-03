@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - (Non-hidden) properties from base types are now included.
 - `DataProviderBuilder.Build` now allows configuring behavior when no factory can be resolved for an object.
 - Added built in provider for `bool`
+- Added built in provider for `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`
 
 ### Changed
 - `DataFactoryAttribute` now requires the target type to be specified e.g. `[DataFactory(typeof(MyData))]`
