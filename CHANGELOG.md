@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added built-in providers for common collection interfaces.
 - (Non-hidden) properties from base types are now included.
 - `DataProviderBuilder.Build` now allows configuring behavior when no factory can be resolved for an object.
+- Added built in provider for `bool`
 
 ### Changed
 - `DataFactoryAttribute` now requires the target type to be specified e.g. `[DataFactory(typeof(MyData))]`

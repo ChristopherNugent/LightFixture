@@ -16,6 +16,7 @@ public sealed class DataProviderBuilder
         Customize(CollectionProvider.Instance);
         Customize(new DictionaryProvider());
         Customize(new EnumProvider());
+        Customize(new BooleanProvider());
     }
 
     public DataProviderBuilder Register<T>(
