@@ -17,6 +17,7 @@ public sealed class DataProviderBuilder
         Customize(new DictionaryProvider());
         Customize(new EnumProvider());
         Customize(new BooleanProvider());
+        Customize(new DateTimeProvider());
     }
 
     public DataProviderBuilder Register<T>(
