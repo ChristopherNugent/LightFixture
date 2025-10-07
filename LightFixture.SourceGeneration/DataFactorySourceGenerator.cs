@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using LightFixture.SourceGeneration.Constants;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,6 +11,8 @@ namespace LightFixture.SourceGeneration;
 [Generator]
 public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 {
+    private static readonly DataFactoryDefinitionFactory DefinitionFactory = new();
+    
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var targetSymbols = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -29,7 +30,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
             return;
         }
 
-        var factoryDefinition = GetFactoryDefinition(namedType, context.CancellationToken);
+        var factoryDefinition = DefinitionFactory.GetFactoryDefinition(namedType, context.CancellationToken);
         var typesToGenerate = WalkTypes(factoryDefinition);
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
@@ -170,49 +171,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         _ => type.ToDisplayString(),
     };
 
-    private static DataFactoryDefinition GetFactoryDefinition(INamedTypeSymbol symbol, CancellationToken token)
-    {
-        var definition = new DataFactoryDefinition();
-        foreach (var attribute in symbol.GetAttributes())
-        {
-            token.ThrowIfCancellationRequested();
-            switch (attribute.AttributeClass?.ToDisplayString())
-            {
-                case WellKnownTypes.DataFactoryAttribute:
-                    HandleDataFactoryAttribute(definition, attribute);
-                    break;
-                case WellKnownTypes.DataFactoryIgnorePropertyAttribute:
-                    HandleIgnorePropertyAttribute(definition, attribute);
-                    break;
-            }
-        }
-
-        return definition;
-
-        static void HandleDataFactoryAttribute(DataFactoryDefinition definition, AttributeData data)
-        {
-            if (data.ConstructorArguments.Length is 1
-                && data.ConstructorArguments[0].Value is ITypeSymbol type)
-            {
-                definition.RootTypes.Add(type);
-            }
-        }
-
-        static void HandleIgnorePropertyAttribute(DataFactoryDefinition definition, AttributeData data)
-        {
-            if (data.ConstructorArguments.Length is 2
-                && data.ConstructorArguments[0].Value is ITypeSymbol type
-                && data.ConstructorArguments[1].Value is string property)
-            {
-                if (!definition.IgnoredProperties.TryGetValue(type, out var ignored))
-                {
-                    ignored = new();
-                    definition.IgnoredProperties[type] = ignored;
-                }
-                ignored.Add(property);
-            }
-        }
-    }
+   
 
     private static IEnumerable<ITypeSymbol> WalkTypes(DataFactoryDefinition definition)
     {
@@ -291,12 +250,5 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         }
 
         return false;
-    }
-
-    private sealed class DataFactoryDefinition
-    {
-        public HashSet<ITypeSymbol> RootTypes { get; } = new(SymbolEqualityComparer.Default);
-
-        public Dictionary<ITypeSymbol, HashSet<string>> IgnoredProperties { get; } = new(SymbolEqualityComparer.Default);
     }
 }
