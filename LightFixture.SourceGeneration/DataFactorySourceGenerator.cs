@@ -31,7 +31,7 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
         }
 
         var factoryDefinition = DefinitionFactory.GetFactoryDefinition(namedType, context.CancellationToken);
-        var typesToGenerate = WalkTypes(factoryDefinition);
+        var typesToGenerate = factoryDefinition.WalkTypes();
         var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
@@ -173,82 +173,5 @@ public sealed class DataFactorySourceGenerator : IIncrementalGenerator
 
    
 
-    private static IEnumerable<ITypeSymbol> WalkTypes(DataFactoryDefinition definition)
-    {
-        var explored = new HashSet<ITypeSymbol>(definition.RootTypes, SymbolEqualityComparer.Default);
-        var queue = new Queue<ITypeSymbol>(definition.RootTypes);
-        
-        while (queue.Count > 0)
-        {
-            var type = queue.Dequeue();
-            yield return type;
-            foreach (var member in type.GetMembers())
-            {
-                if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
-                    || IsIgnored(type, property.Name))
-                {
-                    continue;
-                }
-                var relevantType = UnwrapType(property.Type);
-                
-                if (!IsNativeType(relevantType) && explored.Add(relevantType))
-                {
-                    queue.Enqueue(relevantType);
-                }
-            }
-        }
-        
-        yield break;
-
-        static ITypeSymbol UnwrapType(ITypeSymbol type)
-        {
-            if (type is INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable)
-            {
-                return UnwrapType(nullable.TypeArguments[0]);
-            }
-
-            if (type is IArrayTypeSymbol array)
-            {
-                return array.ElementType;
-            }
-            
-            return type;
-        }
-        
-        bool IsIgnored(ITypeSymbol containingType, string propertyName)
-        {
-            return definition.IgnoredProperties.TryGetValue(containingType, out var ignored)
-                && ignored.Contains(propertyName);
-        }
-    }
-
-    private static bool IsNativeType(ITypeSymbol type)
-    {
-        if (type is INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable)
-        {
-            type = nullable.TypeArguments[0];
-        }
-
-        if (type is IArrayTypeSymbol)
-        {
-            return true;
-        }
-
-        if (type.SpecialType is not SpecialType.None)
-        {
-            return true;
-        }
-
-        if (type.TypeKind is TypeKind.Enum)
-        {
-            return true;
-        }
-
-        if (type.ContainingNamespace?.ToDisplayString() is "System.Collections.Generic")
-        {
-            return true;
-        }
-
-        return false;
-    }
+    
 }
