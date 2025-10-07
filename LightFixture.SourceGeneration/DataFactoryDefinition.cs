@@ -3,8 +3,10 @@ using Microsoft.CodeAnalysis;
 
 namespace LightFixture.SourceGeneration;
 
-internal sealed class DataFactoryDefinition
+internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
 {
+    public INamedTypeSymbol FactoryType { get; } = factorySymbol;
+    
     public HashSet<ITypeSymbol> RootTypes { get; } = new(SymbolEqualityComparer.Default);
 
     public Dictionary<ITypeSymbol, HashSet<string>> IgnoredProperties { get; } = new(SymbolEqualityComparer.Default);

@@ -8,7 +8,7 @@ internal sealed class DataFactoryDefinitionFactory
 {
     public DataFactoryDefinition GetFactoryDefinition(INamedTypeSymbol symbol, CancellationToken token)
     {
-        var definition = new DataFactoryDefinition();
+        var definition = new DataFactoryDefinition(symbol);
         foreach (var attribute in symbol.GetAttributes())
         {
             token.ThrowIfCancellationRequested();
