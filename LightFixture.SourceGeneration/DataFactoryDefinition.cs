@@ -6,16 +6,18 @@ namespace LightFixture.SourceGeneration;
 internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
 {
     public INamedTypeSymbol FactoryType { get; } = factorySymbol;
-    
+
     public HashSet<ITypeSymbol> RootTypes { get; } = new(SymbolEqualityComparer.Default);
 
     public Dictionary<ITypeSymbol, HashSet<string>> IgnoredProperties { get; } = new(SymbolEqualityComparer.Default);
-    
+
+    public HashSet<ITypeSymbol> IgnoredTypes { get; } = new(SymbolEqualityComparer.Default);
+
     public IEnumerable<ITypeSymbol> WalkTypes()
     {
         var explored = new HashSet<ITypeSymbol>(RootTypes, SymbolEqualityComparer.Default);
         var queue = new Queue<ITypeSymbol>(RootTypes);
-        
+
         while (queue.Count > 0)
         {
             var type = queue.Dequeue();
@@ -27,15 +29,18 @@ internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
                 {
                     continue;
                 }
+
                 var relevantType = UnwrapType(property.Type);
-                
-                if (!IsNativeType(relevantType) && explored.Add(relevantType))
+
+                if (!IsNativeType(relevantType)
+                    && !IsIgnored(type)
+                    && explored.Add(relevantType))
                 {
                     queue.Enqueue(relevantType);
                 }
             }
         }
-        
+
         yield break;
 
         static ITypeSymbol UnwrapType(ITypeSymbol type)
@@ -49,16 +54,18 @@ internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
             {
                 return array.ElementType;
             }
-            
+
             return type;
         }
     }
-    
+
     private bool IsIgnored(ITypeSymbol containingType, string propertyName)
     {
         return IgnoredProperties.TryGetValue(containingType, out var ignored)
                && ignored.Contains(propertyName);
     }
+
+    private bool IsIgnored(ITypeSymbol type) => IgnoredTypes.Contains(type);
 
     private static bool IsNativeType(ITypeSymbol type)
     {

@@ -20,6 +20,9 @@ internal sealed class DataFactoryDefinitionFactory
                 case WellKnownTypes.DataFactoryIgnorePropertyAttribute:
                     HandleIgnorePropertyAttribute(definition, attribute);
                     break;
+                case WellKnownTypes.DataFactoryIgnoreTypeAttribute:
+                    HandleIgnoreTypeAttribute(definition, attribute);
+                    break;
             }
         }
 
@@ -48,6 +51,15 @@ internal sealed class DataFactoryDefinitionFactory
             }
 
             ignored.Add(property);
+        }
+    }
+
+    private static void HandleIgnoreTypeAttribute(DataFactoryDefinition definition, AttributeData data)
+    {
+        if (data.ConstructorArguments.Length is 1
+            && data.ConstructorArguments[0].Value is ITypeSymbol type)
+        {
+            definition.IgnoredTypes.Add(type);
         }
     }
 }
