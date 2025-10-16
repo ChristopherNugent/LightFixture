@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+# [0.3.1] - 2025-10-15
+### Changes
+- Minor performance improvements to how arrays are resolved.
+
 # [0.3.0] - 2025-10-02
 ### Added
 - Added "post processor" methods for more granular customizations
