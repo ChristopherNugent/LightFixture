@@ -8,6 +8,7 @@ internal sealed class CollectionProvider : IDataProviderCustomization
     public static readonly CollectionProvider Instance = new();
     
     private readonly ConcurrentDictionary<Type, IEnumerableProvider> _providers = new ();
+    private readonly ConcurrentDictionary<Type, IArrayProvider> _arrayProviders = new ();
 
     private CollectionProvider()
     {
@@ -33,7 +34,7 @@ internal sealed class CollectionProvider : IDataProviderCustomization
             seriesProvider.Get(provider, creationRequest))!;
     }
 
-    private ResolvedData<object> MakeArray(DataProvider provider, CreationRequest creationRequest)
+    public ResolvedData<object> MakeArray(DataProvider provider, CreationRequest creationRequest)
     {
         if (creationRequest.RequestedType?.IsArray is not true
             || creationRequest.RequestedType.GetElementType() is not {} elementType)
@@ -41,19 +42,15 @@ internal sealed class CollectionProvider : IDataProviderCustomization
             return ResolvedData<object>.NoData;
         }
         
-        if(!_providers.TryGetValue(elementType, out var seriesProvider))
+        if(!_arrayProviders.TryGetValue(elementType, out var seriesProvider))
         {
-            seriesProvider = (IEnumerableProvider)Activator.CreateInstance(
-                typeof(TypedEnumerableProvider<>).MakeGenericType(elementType))!;
+            seriesProvider = (IArrayProvider)Activator.CreateInstance(
+                typeof(TypedArrayProvider<>).MakeGenericType(elementType))!;
             
-            _providers.TryAdd(elementType, seriesProvider);
+            _arrayProviders.TryAdd(elementType, seriesProvider);
         }
 
-        var enumerable = seriesProvider.Get(provider, creationRequest);
-        var list = enumerable.Cast<object>().ToArray();
-        var array = Array.CreateInstance(elementType, list.Length);
-        list.CopyTo(array, 0);
-        return array;
+        return seriesProvider.Get(provider, creationRequest);
     }
     
     public void Apply(DataProviderBuilder builder)
@@ -101,7 +98,20 @@ internal sealed class CollectionProvider : IDataProviderCustomization
 
         public IEnumerable Get(DataProvider provider, CreationRequest request) => GetItems(provider, request);
     }
+    
+    private sealed class TypedArrayProvider<T> : IArrayProvider
+    {
+        private T[] GetItems(DataProvider provider, CreationRequest request)
+            => provider.ResolveMany<T>(request).ToArray();
 
+        public object Get(DataProvider provider, CreationRequest request) => GetItems(provider, request);
+    }
+
+    private interface IArrayProvider
+    {
+        object Get(DataProvider provider, CreationRequest request);
+    }
+    
     private interface IEnumerableProvider
     {
         IEnumerable Get(DataProvider provider, CreationRequest request);
