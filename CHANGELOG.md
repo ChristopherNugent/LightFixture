@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+# [0.3.2] - 2025-10-16
+### Fixed
+- Fixed issue affecting triggering of source generator.
+
 # [0.3.1] - 2025-10-15
 ### Changes
 - Minor performance improvements to how arrays are resolved.
