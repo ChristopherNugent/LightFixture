@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Include created type name in factory name to improve observability in stack traces/profiling/etc.
 
 ### Deprecated
 
