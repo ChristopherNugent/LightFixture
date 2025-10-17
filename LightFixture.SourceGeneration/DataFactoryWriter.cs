@@ -15,7 +15,7 @@ internal sealed class DataFactoryWriter
         CancellationToken cancellationToken)
     {
         var typesToGenerate = factoryDefinition.WalkTypes();
-        var factoryLookup = new Dictionary<ITypeSymbol, int>(SymbolEqualityComparer.Default);
+        var factoryLookup = new Dictionary<ITypeSymbol, string>(SymbolEqualityComparer.Default);
 
         var code = new CodeBuilder();
 
@@ -45,7 +45,7 @@ internal sealed class DataFactoryWriter
             .OpenBlock();
         foreach (var kvp in factoryLookup)
         {
-            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>((p, _) => _Factory{kvp.Value}(p));");
+            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>((p, _) => {kvp.Value}(p));");
         }
 
         code.CloseBlock();
@@ -57,7 +57,8 @@ internal sealed class DataFactoryWriter
         void WriteAnonymousFactory(ITypeSymbol type)
         {
             factoryDefinition.IgnoredProperties.TryGetValue(type, out var ignoredProperties);
-            factoryLookup[type] = factoryNumber;
+            var factoryMethodName = $"_Factory{factoryNumber}_{type.Name}";
+            factoryLookup[type] = factoryMethodName;
 
             var constructor = type is INamedTypeSymbol nt
                 ? nt.Constructors
@@ -70,18 +71,20 @@ internal sealed class DataFactoryWriter
                 constructorParameters.Select(x => x.Name),
                 StringComparer.InvariantCultureIgnoreCase);
 
+            var createdTypeName = GetFullTypeName(type);
             code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
                 .AppendLine(
-                    $"private {GetFullTypeName(type)} _Factory{factoryNumber}(global::LightFixture.DataProvider provider)")
+                    $"private {createdTypeName} {factoryMethodName}(global::LightFixture.DataProvider provider)")
                 .OpenBlock()
-                .Append($"var o = new {GetFullTypeName(type)}(");
+                .Append($"var o = new {createdTypeName}(");
 
             for (var i = 0; i < constructorParameters.Length; i++)
             {
                 var parameter = constructorParameters[i];
-                code.Append($"provider.Resolve<{GetFullTypeName(parameter.Type)}>(")
+                var parameterTypeName = GetFullTypeName(parameter.Type);
+                code.Append($"provider.Resolve<{parameterTypeName}>(")
                     .Append("new global::LightFixture.CreationRequest(")
-                    .Append($"typeof({GetFullTypeName(parameter.Type)}),")
+                    .Append($"typeof({parameterTypeName}),")
                     .Append($"\"{parameter.Name}\")).Value");
 
                 if (i < constructorParameters.Length - 1)
