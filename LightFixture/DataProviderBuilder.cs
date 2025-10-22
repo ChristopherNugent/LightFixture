@@ -7,6 +7,7 @@ public sealed class DataProviderBuilder
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories = new();
     private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories = new();
     private readonly List<Action<DataProvider, object>> _postProcessors = new();
+    private readonly Dictionary<Type, List<object>> _typedPostProcessors = new();
 
     public DataProviderBuilder()
     {
@@ -57,13 +58,18 @@ public sealed class DataProviderBuilder
     }
 
     public DataProviderBuilder AddPostProcessor<T>(Action<DataProvider, T> postProcessor)
-        => AddPostProcessor((p, obj) =>
+    {
+        var key = typeof(T);
+        if (!_typedPostProcessors.TryGetValue(key, out var actions))
         {
-            if (obj is T t)
-            {
-                postProcessor(p, t);
-            }
-        });
+            actions = [];
+            _typedPostProcessors[key] = actions;
+        }
+        
+        actions.Add(postProcessor);
+
+        return this;
+    }
 
     public DataProviderBuilder AddPostProcessor(Action<DataProvider, object> postProcessor)
     {
@@ -71,5 +77,10 @@ public sealed class DataProviderBuilder
         return this;
     }
 
-    public DataProvider Build(bool errorIfNoFactory = false) => new(_factories, _fallbackFactories,  _postProcessors, errorIfNoFactory);
+    public DataProvider Build(bool errorIfNoFactory = false) => new(
+        _factories,
+        _fallbackFactories,
+        _postProcessors,
+        _typedPostProcessors,
+        errorIfNoFactory);
 }

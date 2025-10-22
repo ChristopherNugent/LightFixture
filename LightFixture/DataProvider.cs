@@ -5,6 +5,8 @@ public sealed class DataProvider
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories;
     private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
     private readonly List<Action<DataProvider, object>> _postProcessors;
+    private readonly Dictionary<Type, List<object>> _typedPostProcessors;
+    
     private readonly bool _errorIfNoFactory;
 
     private readonly HashSet<Type> _typeStack = [];
@@ -13,18 +15,33 @@ public sealed class DataProvider
         Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> factories,
         List<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories,
         List<Action<DataProvider, object>> postProcessors,
+        Dictionary<Type, List<object>> typedPostProcessors,
         bool errorIfNoFactory)
     {
+        _errorIfNoFactory = errorIfNoFactory;
+        
         _factories = factories;
         _fallbackFactories = fallbackFactories;
         _postProcessors = postProcessors;
-        _errorIfNoFactory = errorIfNoFactory;
+        _typedPostProcessors = typedPostProcessors;
     }
 
     public ResolvedData<T> Resolve<T>(CreationRequest? creationRequest = null)
     {
         creationRequest = new(typeof(T), creationRequest?.PropertyName);
-        return Resolve(creationRequest.Value).AsGeneric<T>();
+        var result = Resolve(creationRequest.Value).AsGeneric<T>();
+
+        if (result.IsResolved && _typedPostProcessors.TryGetValue(typeof(T), out var actions))
+        {
+            var value = result.Value;
+            foreach (var obj in actions)
+            {
+                var action = (Action<DataProvider, T>)obj;
+                action(this, value);
+            }
+        }
+
+        return result;
     }
 
     public ResolvedData<object> Resolve(CreationRequest creationRequest)
@@ -58,12 +75,12 @@ public sealed class DataProvider
         var request = new CreationRequest(typeof(T), creationRequest?.PropertyName);
         for (var i = 0; i < count; i++)
         {
-            var result = Resolve(request);
+            var result = Resolve<T>(request);
             if (!result.IsResolved)
             {
                 yield break;
             }
-            yield return (T) result.Value;
+            yield return result.Value;
         }
     }
 
