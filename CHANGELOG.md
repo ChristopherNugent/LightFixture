@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Include created type name in factory name to improve observability in stack traces/profiling/etc.
 
 ### Deprecated
 
@@ -19,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+# [0.3.3] - 2025-10-22
+### Changed
+- Include created type name in factory name to improve observability in stack traces/profiling/etc.
+- Postprocessors are now registered per type to improve performance by removing the need for a type guard against
+  every single resolved object in every single postprocessor.
 
 # [0.3.2] - 2025-10-16
 ### Fixed
