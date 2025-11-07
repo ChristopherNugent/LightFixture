@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace LightFixture.SourceGeneration;
@@ -30,32 +31,25 @@ internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
                     continue;
                 }
 
-                var relevantType = UnwrapType(property.Type);
+                var relevantTypes = UnwrapType(property.Type);
 
-                if (!IsNativeType(relevantType)
-                    && !IsIgnored(type)
-                    && explored.Add(relevantType))
+                foreach (var relevantType in relevantTypes)
                 {
-                    queue.Enqueue(relevantType);
+                    EnqueueType(relevantType);
                 }
             }
         }
 
         yield break;
 
-        static ITypeSymbol UnwrapType(ITypeSymbol type)
+        void EnqueueType(ITypeSymbol t)
         {
-            if (type is INamedTypeSymbol { IsGenericType: true, Name: "Nullable" } nullable)
+            if (!IsNativeType(t)
+                && !IsIgnored(t)
+                && explored.Add(t))
             {
-                return UnwrapType(nullable.TypeArguments[0]);
+                queue.Enqueue(t);
             }
-
-            if (type is IArrayTypeSymbol array)
-            {
-                return array.ElementType;
-            }
-
-            return type;
         }
     }
 
@@ -95,5 +89,20 @@ internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
         }
 
         return false;
+    }
+    
+    private static IEnumerable<ITypeSymbol> UnwrapType(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol { IsGenericType: true } generic)
+        {
+            return generic.TypeArguments.SelectMany(UnwrapType);
+        }
+
+        if (type is IArrayTypeSymbol array)
+        {
+            return [array.ElementType];
+        }
+
+        return [type];
     }
 }
