@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Walk generic type arguments for pulling linked types for data factories.
 
 ### Deprecated
 
