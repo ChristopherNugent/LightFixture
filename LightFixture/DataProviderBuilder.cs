@@ -77,7 +77,7 @@ public sealed class DataProviderBuilder
         return this;
     }
 
-    public DataProvider Build(bool errorIfNoFactory = false) => new(
+    public DataProvider Build(bool errorIfNoFactory = false) => new ThreadSafeDataProvider(
         _factories,
         _fallbackFactories,
         _postProcessors,

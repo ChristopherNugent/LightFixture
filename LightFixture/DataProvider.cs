@@ -1,6 +1,6 @@
 namespace LightFixture;
 
-public sealed class DataProvider
+public class DataProvider
 {
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories;
     private readonly List<Func<DataProvider, CreationRequest, ResolvedData<object>>> _fallbackFactories;
@@ -26,6 +26,15 @@ public sealed class DataProvider
         _typedPostProcessors = typedPostProcessors;
     }
 
+    internal DataProvider(DataProvider other) : this(
+        other._factories,
+        other._fallbackFactories,
+        other._postProcessors,
+        other._typedPostProcessors,
+        other._errorIfNoFactory)
+    {
+    }
+
     public ResolvedData<T> Resolve<T>(CreationRequest? creationRequest = null)
     {
         creationRequest = new(typeof(T), creationRequest?.PropertyName);
@@ -44,7 +53,7 @@ public sealed class DataProvider
         return result;
     }
 
-    public ResolvedData<object> Resolve(CreationRequest creationRequest)
+    public virtual ResolvedData<object> Resolve(CreationRequest creationRequest)
     {
         if (creationRequest.RequestedType is not { } resolvedType)
         {
