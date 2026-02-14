@@ -35,7 +35,14 @@ internal sealed class DataFactoryWriter
         foreach (var type in typesToGenerate)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            WriteAnonymousFactory(type);
+            if (type is INamedTypeSymbol { IsUnboundGenericType: true } namedType)
+            {
+                WriteGenericFactory(namedType);
+            }
+            else
+            {
+                WriteAnonymousFactory(type);
+            }
             factoryNumber++;
         }
 
@@ -45,7 +52,14 @@ internal sealed class DataFactoryWriter
             .OpenBlock();
         foreach (var kvp in factoryLookup)
         {
-            code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>((p, _) => {kvp.Value}(p));");
+            if (kvp.Key is INamedTypeSymbol { IsUnboundGenericType: true } openGeneric)
+            {
+                code.AppendLine($"builder.Register(typeof({GetOpenGenericName(openGeneric)}), {kvp.Value});");
+            } 
+            else
+            { 
+                code.AppendLine($"builder.Register<{GetFullTypeName(kvp.Key)}>((p, _) => {kvp.Value}(p));");
+            }
         }
 
         code.CloseBlock();
@@ -53,6 +67,120 @@ internal sealed class DataFactoryWriter
 
 
         return code.ToString();
+
+        void WriteGenericFactory(INamedTypeSymbol type)
+        {
+            var originalType = type;
+            factoryDefinition.IgnoredProperties.TryGetValue(type, out var ignoredProperties);
+            var factoryMethodName = $"_Factory{factoryNumber}_{type.Name}";
+            type = type.OriginalDefinition;
+
+            var constructor =
+                type.Constructors
+                    .Where(c => c is { IsStatic: false, DeclaredAccessibility: Accessibility.Public })
+                    .OrderBy(x => x.Parameters.Length)
+                    .FirstOrDefault();
+
+
+            var constructorParameters = constructor?.Parameters ?? ImmutableArray<IParameterSymbol>.Empty;
+            var constructorParameterNames = new HashSet<string>(
+                constructorParameters.Select(x => x.Name),
+                StringComparer.InvariantCultureIgnoreCase);
+
+            var count = 0;
+            var propertiesToSet = GetPropertiesToSet(
+                factoryDefinition,
+                constructorParameterNames,
+                type);
+
+            var typeParameterString = string.Join(", ", type.TypeParameters.Select(t => t.Name));
+            var createdTypeName = GetFullTypeName(type);
+            code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
+                .AppendLine(
+                    $"private static {createdTypeName} {factoryMethodName}<{typeParameterString}>(global::LightFixture.DataProvider provider)")
+                .OpenBlock()
+                .Append($"var o = new {createdTypeName}(");
+            
+            for (var i = 0; i < constructorParameters.Length; i++)
+            {
+                var parameter = constructorParameters[i];
+                var parameterTypeName = GetFullTypeName(parameter.Type);
+                code.Append($"provider.Resolve<{parameterTypeName}>(")
+                    .Append("new global::LightFixture.CreationRequest(")
+                    .Append($"typeof({parameterTypeName}),")
+                    .Append($"\"{parameter.Name}\")).Value");
+
+                if (i < constructorParameters.Length - 1)
+                {
+                    code.Append(", ");
+                }
+            }
+
+            code.AppendLine(");");
+
+            foreach (var property in propertiesToSet)
+            {
+                code.Append($"var o{count} = provider.Resolve<{GetFullTypeName(property.Type)}>(")
+                    .AppendLine($"new (typeof({GetFullTypeName(property.Type)}),\"{property.Name}\"));")
+                    .AppendLine($"if(o{count}.IsResolved)")
+                    .OpenBlock()
+                    .AppendLine($"o.{property.Name} = o{count}.Value;")
+                    .CloseBlock();
+
+                count++;
+            }
+
+            code.AppendLine("return o;")
+                .CloseBlock()
+                .AppendLine();
+
+            var keyType = type.TypeParameters.Length is 1
+                ? "global::System.Type"
+                : $"({string.Join(", ", type.TypeParameters.Select(_ => "global::System.Type"))})";
+            var factoryInterfaceName = $"{factoryMethodName}_IFactory";
+            code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
+                .AppendLine($"private interface {factoryInterfaceName}")
+                .OpenBlock()
+                .AppendLine(
+                    $"public ResolvedData<object> Resolve(global::LightFixture.DataProvider provider);")
+                .CloseBlock()
+                .AppendLine();
+
+            var factoryClassName = $"{factoryMethodName}_Factory";
+            code.AppendLine(CommonSyntax.GeneratedCodeAttribute)
+                .AppendLine($"private sealed class {factoryClassName}<{typeParameterString}> : {factoryInterfaceName}")
+                .OpenBlock()
+                .AppendLine(
+                    $"public ResolvedData<object> Resolve(global::LightFixture.DataProvider provider) => {factoryMethodName}<{typeParameterString}>(provider);")
+                .CloseBlock()
+                .AppendLine();
+
+            var cacheName = $"{factoryMethodName}_Factories";
+            code.AppendLine(
+                    $"private static global::System.Collections.Concurrent.ConcurrentDictionary<{keyType}, {factoryInterfaceName}> {cacheName} = new();")
+                .AppendLine()
+                .AppendLine(
+                    $"private static ResolvedData<object> {factoryMethodName}_Generic(global::LightFixture.DataProvider provider, global::LightFixture.CreationRequest request)")
+                .OpenBlock();
+
+            var openGenericBlock = $"<{string.Join(",", type.TypeParameters.Select(_ => string.Empty))}>";
+            var typeList = string.Join(", ", type.TypeParameters.Select((_, i) => $"t{i}"));
+            code.AppendLine(
+                    $"if(request.RequestedType?.GenericTypeArguments is not [{string.Join(", ", type.TypeParameters.Select((_, i) => $"var t{i}"))}])")
+                .OpenBlock()
+                .AppendLine("return ResolvedData<object>.NoData;")
+                .CloseBlock()
+                .AppendLine()
+                .AppendLine($"var key = ({typeList});")
+                .Append($"return {cacheName}.GetOrAdd(key, _ => ({factoryInterfaceName})")
+                .Append($"Activator.CreateInstance(typeof({factoryClassName}{openGenericBlock}).MakeGenericType({typeList}))!)")
+                .AppendLine(".Resolve(provider);");
+
+            code.CloseBlock()
+                .AppendLine();
+            
+            factoryLookup[originalType] = $"{factoryMethodName}_Generic";
+        }
 
         void WriteAnonymousFactory(ITypeSymbol type)
         {
@@ -131,7 +259,8 @@ internal sealed class DataFactoryWriter
         {
             definition.IgnoredProperties.TryGetValue(currentType, out var ignoredProperties);
             alreadyUsedMembers.UnionWith(ignoredProperties ?? []);
-            foreach (var member in currentType.GetMembers())
+            var members = currentType.GetMembers();
+            foreach (var member in members)
             {
                 if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
                     || constructorParameterNames.Contains(property.Name)
@@ -154,8 +283,16 @@ internal sealed class DataFactoryWriter
         IArrayTypeSymbol { ElementType: var elementType } => $"{GetFullTypeName(elementType)}[]",
         { SpecialType: SpecialType.None, IsReferenceType: true, NullableAnnotation: NullableAnnotation.Annotated }
             => $"global::{type.ToDisplayString()}".Replace("?", string.Empty),
+        ITypeParameterSymbol => type.ToDisplayString().Replace("?", string.Empty),
         { SpecialType: SpecialType.None } => $"global::{type.ToDisplayString()}",
         { SpecialType: SpecialType.System_String } => "string",
         _ => type.ToDisplayString(),
     };
+
+    private static string GetOpenGenericName(INamedTypeSymbol type)
+    {
+        var full = GetFullTypeName(type);
+        var withoutGeneric = full.Substring(0, full.IndexOf("<", StringComparison.InvariantCulture));
+        return $"{withoutGeneric}<{string.Join(",", type.TypeParameters.Select(_ => string.Empty))}>";
+    }
 }

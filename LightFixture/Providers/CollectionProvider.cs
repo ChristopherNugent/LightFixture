@@ -20,7 +20,7 @@ internal sealed class CollectionProvider : IDataProviderCustomization
         {
             return ResolvedData<object>.NoData;
         }
-
+        
         if(!_providers.TryGetValue(elementType, out var seriesProvider))
         {
             seriesProvider = (IEnumerableProvider)Activator.CreateInstance(

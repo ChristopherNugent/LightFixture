@@ -23,7 +23,8 @@ internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
         {
             var type = queue.Dequeue();
             yield return type;
-            foreach (var member in type.GetMembers())
+            var members = type.GetMembers();
+            foreach (var member in members)
             {
                 if (member is not IPropertySymbol { GetMethod: not null, SetMethod: not null } property
                     || IsIgnored(type, property.Name))
