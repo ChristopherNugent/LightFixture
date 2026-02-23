@@ -1,9 +1,7 @@
 namespace LightFixture;
 
-public sealed class ThreadSafeDataProvider : DataProvider
+internal sealed class ThreadSafeDataProvider : DataProvider
 {
-    private readonly HashSet<Type> _typeStack = [];
-    
     internal ThreadSafeDataProvider(
         Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> factories,
         List<Func<DataProvider, CreationRequest, ResolvedData<object>>> fallbackFactories, 
