@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Walk generic type arguments for pulling linked types for data factories.
+- `DataProvider` root-level resolve is now thread-safe.
 
 ### Deprecated
 
