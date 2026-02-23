@@ -96,3 +96,13 @@ public sealed class SampleData
     public double? Double { get; set; }
 }
 ```
+
+LightFixture supports registration of open generics
+
+```csharp
+public sealed record Wrapper<T>(T Value);
+
+// Enables resolution of Wrapper<string>, Wrapper<int>, etc.
+[DataFactory(typeof(Wrapper<>))]
+public partial class SampleDataProvider;
+```
