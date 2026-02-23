@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-- Walk generic type arguments for pulling linked types for data factories.
-- `DataProvider` root-level resolve is now thread-safe.
 
 ### Deprecated
 
@@ -21,21 +19,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.4.0] - 2026-02-22
+###
+- Added ability to register open generics.
+
+### Changed
+- Walk generic type arguments for pulling linked types for data factories.
+- `DataProvider` root-level resolve is now thread-safe.
+
 # [0.3.3] - 2025-10-22
 ### Changed
 - Include created type name in factory name to improve observability in stack traces/profiling/etc.
 - Postprocessors are now registered per type to improve performance by removing the need for a type guard against
   every single resolved object in every single postprocessor.
 
-# [0.3.2] - 2025-10-16
+## [0.3.2] - 2025-10-16
 ### Fixed
 - Fixed issue affecting triggering of source generator.
 
-# [0.3.1] - 2025-10-15
+## [0.3.1] - 2025-10-15
 ### Changes
 - Minor performance improvements to how arrays are resolved.
 
-# [0.3.0] - 2025-10-02
+## [0.3.0] - 2025-10-02
 ### Added
 - Added "post processor" methods for more granular customizations
 - Added `DataFactoryIgnorePropertyAttribute` for ignoring properties in source generated factories.
