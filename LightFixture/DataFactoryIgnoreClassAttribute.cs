@@ -2,5 +2,9 @@
 
 namespace LightFixture;
 
+/// <summary>
+/// Specify that a type should be excluded during factory code generation.
+/// </summary>
+/// <param name="type">The type to ignore.</param>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class DataFactoryIgnoreClassAttribute(Type type) : Attribute;

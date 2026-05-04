@@ -1,5 +1,8 @@
 namespace LightFixture;
 
+/// <summary>
+/// Defines different behaviors for dealing with obsolete members.
+/// </summary>
 public enum ObsoleteHandlingBehavior
 {
     /// <summary>

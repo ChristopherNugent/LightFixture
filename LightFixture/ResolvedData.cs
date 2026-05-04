@@ -1,8 +1,19 @@
 namespace LightFixture;
 
+/// <summary>
+/// Represents a unit of resolved data.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public readonly struct ResolvedData<T>
 {
+    /// <summary>
+    /// Whether data was successfully resolved.
+    /// </summary>
     public bool IsResolved { get; private init; }
+    
+    /// <summary>
+    /// The resolved value, or default.
+    /// </summary>
     public T Value { get; private init; }
 
     public static implicit operator ResolvedData<T>(T value) => new()
