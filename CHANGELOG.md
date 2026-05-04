@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `DataFactoryObsoleteHandlingAttribute` to deal with common patterns working with obsolete properties.
 
 ### Changed
 
