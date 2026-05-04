@@ -23,6 +23,9 @@ internal sealed class DataFactoryDefinitionFactory
                 case WellKnownTypes.DataFactoryIgnoreTypeAttribute:
                     HandleIgnoreTypeAttribute(definition, attribute);
                     break;
+                case WellKnownTypes.DataFactoryObsoleteHandlingAttribute:
+                    HandleObsoleteBehaviorAttribute(definition, attribute);
+                    break;
             }
         }
 
@@ -60,6 +63,16 @@ internal sealed class DataFactoryDefinitionFactory
             && data.ConstructorArguments[0].Value is ITypeSymbol type)
         {
             definition.IgnoredTypes.Add(type);
+        }
+    }
+
+    private static void HandleObsoleteBehaviorAttribute(DataFactoryDefinition definition, AttributeData data)
+    {
+        if (data.ConstructorArguments.Length is 1
+            && data.ConstructorArguments[0].Value is {} value)
+        {
+            var behavior = (ObsoleteHandlingBehavior) value;
+            definition.ObsoleteHandling = behavior;
         }
     }
 }
