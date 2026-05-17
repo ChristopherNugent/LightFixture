@@ -4,8 +4,9 @@
     <File Path="README.md" />
     <File Path="CHANGELOG.md" />
   </Folder>
-  <Project Path="LightFixture.SourceGeneration.Tests\LightFixture.SourceGeneration.Tests.csproj" Type="Classic C#" />
-  <Project Path="LightFixture.SourceGeneration\LightFixture.SourceGeneration.csproj" Type="Classic C#" />
-  <Project Path="LightFixture.Tests\LightFixture.Tests.csproj" Type="Classic C#" />
-  <Project Path="LightFixture\LightFixture.csproj" Type="Classic C#" />
+  <Project Path="LightFixture.Benchmark/LightFixture.Benchmark.csproj" />
+  <Project Path="LightFixture.SourceGeneration.Tests\LightFixture.SourceGeneration.Tests.csproj" Type="C#" />
+  <Project Path="LightFixture.SourceGeneration\LightFixture.SourceGeneration.csproj" Type="C#" />
+  <Project Path="LightFixture.Tests\LightFixture.Tests.csproj" Type="C#" />
+  <Project Path="LightFixture\LightFixture.csproj" Type="C#" />
 </Solution>
