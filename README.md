@@ -6,6 +6,12 @@ are excellent, they can become slow as the amount of anonymous data increases.
 LightFixture provides source-generated factories and enables user-provided implementations to be provided for resolving
 anonymous data.
 
+# Installation
+
+LightFixture is available as `CNugent.LightFixture`.
+
+You can add it to your project with `dotnet add {project} package CNugent.LightFixture`.
+
 # Benchmark compared to AutoFixture
 
 This is based on the `LightFixture.Benchmark` project within this repo.
