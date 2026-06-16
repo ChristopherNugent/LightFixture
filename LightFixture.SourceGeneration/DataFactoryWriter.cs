@@ -2,19 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Metadata;
 using System.Threading;
 using LightFixture.SourceGeneration.Constants;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Operations;
 
 namespace LightFixture.SourceGeneration;
 
 internal sealed class DataFactoryWriter
 {
     private const string DisableObsoleteWarningsPragma = "#pragma warning disable CS0612 // Type or member is obsolete";
-
     private const string ObsoleteAttributeSource = "[global::System.Obsolete(\"Suppressing error:true obsolete warnings\")]";
     
     public string WriteFactory(
@@ -106,7 +102,6 @@ internal sealed class DataFactoryWriter
                 factoryDefinition,
                 constructorParameterNames,
                 type);
-#pragma warning restore CS0612 // Type or member is obsolete
 
             var typeParameterString = string.Join(", ", type.TypeParameters.Select(t => t.Name));
             var createdTypeName = GetFullTypeName(type);
