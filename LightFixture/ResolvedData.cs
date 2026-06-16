@@ -3,7 +3,7 @@ namespace LightFixture;
 /// <summary>
 /// Represents a unit of resolved data.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">The resolved type.</typeparam>
 public readonly struct ResolvedData<T>
 {
     /// <summary>
