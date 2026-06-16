@@ -2,6 +2,9 @@
 
 namespace LightFixture;
 
+/// <summary>
+/// Provides customization for building a <see cref="DataProvider"/>
+/// </summary>
 public sealed class DataProviderBuilder
 {
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories = new();

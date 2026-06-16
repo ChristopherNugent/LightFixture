@@ -19,8 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.5.0] - 2026-06-15
+### Added
+- Added `DataFactoryObsoleteHandlingAttribute` to deal with common patterns working with obsolete properties.
+
 ## [0.4.0] - 2026-02-22
-###
+### Added
 - Added ability to register open generics.
 
 ### Changed

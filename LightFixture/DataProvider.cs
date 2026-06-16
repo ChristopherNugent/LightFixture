@@ -1,5 +1,8 @@
 namespace LightFixture;
 
+/// <summary>
+/// A data provider from which one can resolve test data.
+/// </summary>
 public class DataProvider
 {
     private readonly Dictionary<Type, Func<DataProvider, CreationRequest, ResolvedData<object>>> _factories;

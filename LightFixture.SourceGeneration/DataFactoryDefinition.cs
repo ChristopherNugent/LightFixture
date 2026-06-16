@@ -7,6 +7,8 @@ namespace LightFixture.SourceGeneration;
 internal sealed class DataFactoryDefinition(INamedTypeSymbol factorySymbol)
 {
     public INamedTypeSymbol FactoryType { get; } = factorySymbol;
+    
+    public ObsoleteHandlingBehavior ObsoleteHandling { get; set; }
 
     public HashSet<ITypeSymbol> RootTypes { get; } = new(SymbolEqualityComparer.Default);
 
